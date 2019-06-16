@@ -1,0 +1,17 @@
+{
+  "name": "shinobigami-tools",
+  "version": "0.0.0",
+  "description": "",
+  "author": "F_",
+  "license": "MIT",
+  "scripts": {
+    "start": "http-server",
+    "build": "spago bundle-app",
+    "build:module": "spago build"
+  },
+  "devDependencies": {
+    "http-server": "^0.11.1",
+    "purescript": "^0.13.0",
+    "spago": "^0.8.4"
+  }
+}
