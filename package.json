@@ -7,7 +7,8 @@
   "scripts": {
     "start": "http-server",
     "build": "spago bundle-app",
-    "build:module": "spago build"
+	"build:module": "spago build",
+	"test": "spago test --main Test.Main"
   },
   "devDependencies": {
     "http-server": "^0.11.1",
