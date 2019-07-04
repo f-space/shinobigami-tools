@@ -1,0 +1,214 @@
+* { all: unset; }
+
+head { display: none; }
+div { display: block; }
+table { display: table; }
+caption { display: table-caption; }
+colgroup { display: table-column-group; }
+col { display: table-column; }
+thead { display: table-header-group; }
+tbody { display: table-row-group; }
+tfoot { display: table-footer-group; }
+tr { display: table-row; }
+th { display: table-cell; }
+td { display: table-cell; }
+
+body {
+	height: 100vh;
+	overflow: hidden;
+	overscroll-behavior: none;
+	touch-action: none;
+	user-select: none;
+	width: 100vw;
+}
+
+#container {
+	display: grid;
+	grid-auto-flow: column;
+	grid-auto-columns: 100vw;
+	grid-auto-rows: 100vh;
+	transition: transform 500ms;
+	will-change: transform;
+}
+
+#container[data-page="home"] {
+	transform: none;
+}
+
+#container[data-page="config"] {
+	transform: translateX(-100vw);
+}
+
+#container[data-page="view"] {
+	transform: translateX(-200vw);
+}
+
+#back {
+	display: block;
+	position: fixed;
+	left: 1rem;
+	top: 1rem;
+}
+
+#home {
+	align-items: center;
+	display: flex;
+	grid-column: 1;
+	justify-content: space-around;
+}
+
+#config {
+	align-items: center;
+	display: flex;
+	flex-flow: column nowrap;
+	grid-column: 2;
+	justify-content: space-around;
+}
+
+#view {
+	align-items: center;
+	display: flex;
+	flex-flow: column nowrap;
+	grid-column: 3;
+	justify-content: space-around;
+}
+
+.table {
+	border-collapse: collapse;
+}
+
+.selection-mode .table {
+	background : lightgreen;
+}
+
+.table-col-skill {
+	width: 5.5rem;
+}
+
+.table-col-gap {
+	width: 1rem;
+}
+
+.table-category, .table-skill, .table-gap {
+	border: solid 1px black;
+}
+
+.table-category.disabled {
+	background: dimgray;
+}
+
+.table-skill.disabled {
+	background: gray;
+}
+
+.table-skill.acquired {
+	background: blue;
+}
+
+.table-skill.route {
+	background: orange;
+}
+
+.table-skill.selected {
+	background: red;
+}
+
+.table-skill.disabled.acquired {
+	background: lightblue;
+}
+
+.table-skill.disabled.route {
+	background: burlywood;
+}
+
+.table-skill.disabled.selected {
+	background: tomato;
+}
+
+.table-skill.acquired.route {
+	background: magenta;
+}
+
+.table-skill.acquired.selected {
+	background: purple;
+}
+
+.table-skill.disabled.acquired.route {
+	background: pink;
+}
+
+.table-skill.disabled.acquired.selected {
+	background: violet;
+}
+
+.table-skill.cost-0 {
+	background: rgb(0, 0, 255);
+}
+
+.table-skill.cost-1 {
+	background: rgb(0, 0, 223);
+}
+
+.table-skill.cost-2 {
+	background: rgb(0, 0, 191);
+}
+
+.table-skill.cost-3 {
+	background: rgb(0, 0, 159);
+}
+
+.table-skill.cost-4 {
+	background: rgb(0, 0, 127);
+}
+
+.table-skill.cost-5 {
+	background: rgb(0, 0, 95);
+}
+
+.table-skill.cost-6 {
+	background: rgb(0, 0, 63);
+}
+
+.table-skill.cost-7 {
+	background: rgb(0, 0, 31);
+}
+
+.table-skill.cost-8 {
+	background: rgb(0, 0, 0);
+}
+
+.table-gap.route {
+	background: orange;
+}
+
+.table-gap.filled {
+	background: black;
+}
+
+.table-gap.widen {
+	background: green;
+}
+
+.options {
+	display: grid;
+	grid-auto-columns: 8rem;
+	grid-auto-flow: column;
+	grid-column-gap: 5rem;
+	justify-items: center;
+}
+
+.option.checked {
+	background: gray;
+}
+
+.modes {
+	display: grid;
+	grid-auto-columns: 4rem;
+	grid-auto-flow: column;
+	grid-column-gap: 5rem;
+	justify-items: center;
+}
+
+.mode.checked {
+	background: gray;
+}

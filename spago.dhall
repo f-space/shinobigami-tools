@@ -1,7 +1,7 @@
 { name =
     "shinobigami-tools"
 , dependencies =
-    [ "console", "effect", "psci-support" ]
+    [ "console", "effect", "halogen", "psci-support", "spec" ]
 , packages =
     ./packages.dhall
 }
