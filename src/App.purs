@@ -74,9 +74,10 @@ initialState _ =
 
 render :: forall m. MonadEffect m => State -> H.ComponentHTML Action ChildSlots m
 render state =
-  HH.div_
+  HH.div
+    [ HP.id_ "container" ]
     [ HH.div
-      [ HP.id_ "container"
+      [ HP.id_ "track"
       , HP.attr (H.AttrName "data-page") $ pageId state.page
       ]
       [ HH.slot _home unit Home.component unit handleHomeMessage
