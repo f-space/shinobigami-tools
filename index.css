@@ -20,16 +20,24 @@ td { display: table-cell; }
 }
 
 #container {
-	height: 100vh;
+	bottom: 0;
+	left: 0;
 	overflow: hidden;
-	width: 100vw;
+	position: absolute;
+	right: 0;
+	top: 0;
 }
 
 #track {
+	bottom: 0;
 	display: grid;
+	grid-auto-columns: 100%;
 	grid-auto-flow: column;
-	grid-auto-columns: 100vw;
-	grid-template-rows: 100vh;
+	grid-template-rows: 100%;
+	left: 0;
+	position: absolute;
+	right: 0;
+	top: 0;
 	transition: transform 500ms;
 	will-change: transform;
 }
@@ -39,16 +47,16 @@ td { display: table-cell; }
 }
 
 #track[data-page="config"] {
-	transform: translateX(-100vw);
+	transform: translateX(-100%);
 }
 
 #track[data-page="view"] {
-	transform: translateX(-200vw);
+	transform: translateX(-200%);
 }
 
 #back {
 	display: block;
-	position: fixed;
+	position: absolute;
 	left: 1rem;
 	top: 1rem;
 }
@@ -56,7 +64,6 @@ td { display: table-cell; }
 #home {
 	align-items: center;
 	display: flex;
-	grid-column: 1;
 	justify-content: space-around;
 	overflow: hidden;
 }
@@ -65,7 +72,6 @@ td { display: table-cell; }
 	align-items: center;
 	display: flex;
 	flex-flow: column nowrap;
-	grid-column: 2;
 	justify-content: space-around;
 	overflow: hidden;
 	padding-top: 2rem;
@@ -75,7 +81,6 @@ td { display: table-cell; }
 	align-items: center;
 	display: flex;
 	flex-flow: column nowrap;
-	grid-column: 3;
 	justify-content: space-around;
 	overflow: hidden;
 	padding-top: 2rem;
