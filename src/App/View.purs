@@ -1,5 +1,6 @@
 module App.View
   ( component
+  , Query
   , Input
   , Message(..)
   , Slot
@@ -23,6 +24,7 @@ import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Set (Set)
 import Data.Symbol (SProxy(..))
 import Data.Tuple (uncurry)
+import Effect.Aff (Aff)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
@@ -47,6 +49,8 @@ data Action
   | SelectSkill Skill
   | ToggleBarrier SkillCategoryGap
 
+type Query = Const Void
+
 type Input =
   { skills :: SkillTable Boolean
   , gaps :: SkillColumn Boolean
@@ -55,9 +59,13 @@ type Input =
 
 type Message = Unit
 
-type Slot index = H.Slot (Const Void) Message index
+type Slot slot = H.Slot Query Message slot
 
 type ChildSlots = ( table :: Table.Slot Unit )
+
+type MonadType = Aff
+
+type ComponentHTML = H.ComponentHTML Action ChildSlots MonadType
 
 derive instance eqMode :: Eq Mode
 
@@ -68,7 +76,7 @@ instance showMode :: Show Mode where
 _table :: SProxy "table"
 _table = SProxy
 
-component :: forall q m. H.Component HH.HTML q Input Message m
+component :: H.Component HH.HTML Query Input Message MonadType
 component =
   H.mkComponent
     { initialState
@@ -90,7 +98,7 @@ initialState { skills, gaps, options } =
   , options
   }
 
-render :: forall m. State -> H.ComponentHTML Action ChildSlots m
+render :: State -> ComponentHTML
 render { mode, selection, barriers, skills, gaps, options, health } =
   HH.div
     [ HP.id_ "view" ]
@@ -126,7 +134,7 @@ render { mode, selection, barriers, skills, gaps, options, health } =
     costTable :: SkillTable Int
     costTable = maybe (MT.fill $ top) (MT.fillWith <<< MG.cost) graph
   
-    renderMode :: forall w. Mode -> String -> HH.HTML w Action
+    renderMode :: Mode -> String -> ComponentHTML
     renderMode value label =
       HH.span
         [ HP.classes $ H.ClassName <$> cons "mode" if value == mode then ["checked"] else []
@@ -134,7 +142,7 @@ render { mode, selection, barriers, skills, gaps, options, health } =
         ]
         [ HH.text label ]
   
-    renderOption :: forall w i. Boolean -> String -> HH.HTML w i
+    renderOption :: Boolean -> String -> ComponentHTML
     renderOption value label =
       HH.span
         [ HP.classes $ H.ClassName <$> cons "option" if value then ["checked"] else [] ]
@@ -190,7 +198,7 @@ handleMessage (Table.CategoryClicked category) = Just $ ToggleCategory category
 handleMessage (Table.SkillClicked skill) = Just $ SelectSkill skill
 handleMessage (Table.GapClicked gap) = Just $ ToggleBarrier gap
 
-handleAction :: forall m. Action -> H.HalogenM State Action ChildSlots Message m Unit
+handleAction :: Action -> H.HalogenM State Action ChildSlots Message MonadType Unit
 handleAction = case _ of
   HandleInput input -> do
     H.put $ initialState input

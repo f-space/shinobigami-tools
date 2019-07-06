@@ -1,5 +1,7 @@
 module App.Home
   ( component
+  , Query
+  , Input
   , Message(..)
   , Slot
   ) where
@@ -8,6 +10,7 @@ import Prelude
 
 import Data.Const (Const)
 import Data.Maybe (Maybe(..))
+import Effect.Aff (Aff)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
@@ -17,13 +20,21 @@ type State = Unit
 
 data Action = Start
 
+type Query = Const Void
+
+type Input = Unit
+
 data Message = Done
 
-type Slot index = H.Slot (Const Void) Message index
+type Slot slot = H.Slot Query Message slot
 
 type ChildSlots = ()
 
-component :: forall q i m. H.Component HH.HTML q i Message m
+type MonadType = Aff
+
+type ComponentHTML = H.ComponentHTML Action ChildSlots MonadType
+
+component :: H.Component HH.HTML Query Input Message MonadType
 component =
   H.mkComponent
     { initialState
@@ -34,7 +45,7 @@ component =
 initialState :: forall i. i -> State
 initialState = const unit
 
-render :: forall m. State -> H.ComponentHTML Action ChildSlots m
+render :: State -> ComponentHTML
 render _ =
   HH.div
     [ HP.id_ "home" ]
@@ -45,7 +56,7 @@ render _ =
       [ HH.text "開始" ]
     ]
 
-handleAction :: forall m. Action -> H.HalogenM State Action ChildSlots Message m Unit
+handleAction :: Action -> H.HalogenM State Action ChildSlots Message MonadType Unit
 handleAction = case _ of
   Start -> do
     H.raise Done

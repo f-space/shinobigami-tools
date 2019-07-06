@@ -1,5 +1,6 @@
 module App.Table
   ( component
+  , Query
   , Input
   , Message(..)
   , Slot
@@ -13,6 +14,7 @@ import App.Model.Table as MT
 import Data.Array (concatMap, cons)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..))
+import Effect.Aff (Aff)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
@@ -26,6 +28,8 @@ data Action
   | ClickSkill Skill
   | ClickGap SkillCategoryGap
 
+type Query = Const Void
+
 type Input =
   { categoryClasses :: SkillColumn (Array String)
   , skillClasses :: SkillTable (Array String)
@@ -38,11 +42,15 @@ data Message
   | SkillClicked Skill
   | GapClicked SkillCategoryGap
 
-type Slot index = H.Slot (Const Void) Message index
+type Slot slot = H.Slot Query Message slot
 
 type ChildSlots = ()
 
-component :: forall q m. H.Component HH.HTML q Input Message m
+type MonadType = Aff
+
+type ComponentHTML = H.ComponentHTML Action ChildSlots MonadType
+
+component :: H.Component HH.HTML Query Input Message MonadType
 component =
   H.mkComponent
     { initialState
@@ -56,7 +64,7 @@ component =
 initialState :: Input -> State
 initialState = identity
 
-render :: forall m. State -> H.ComponentHTML Action ChildSlots m
+render :: State -> ComponentHTML
 render { categoryClasses, skillClasses, gapHeaderClasses, gapClasses } =
   HH.table
     [ HP.class_ $ H.ClassName "table" ]
@@ -65,19 +73,19 @@ render { categoryClasses, skillClasses, gapHeaderClasses, gapClasses } =
     , HH.tbody_ $ HH.tr_ <<< flip renderRow categories <$> indices
     ]
   where
-    renderColumns :: forall w i. Array SkillCategory -> Array (HH.HTML w i)
+    renderColumns :: Array SkillCategory -> Array ComponentHTML
     renderColumns = concatMap \c -> [ renderGapColumn, renderSkillColumn ]
   
-    renderGapColumn :: forall w i. HH.HTML w i
+    renderGapColumn :: ComponentHTML
     renderGapColumn = HH.col [ HP.class_ $ H.ClassName "table-col-gap" ]
     
-    renderSkillColumn :: forall w i. HH.HTML w i
+    renderSkillColumn :: ComponentHTML
     renderSkillColumn = HH.col [ HP.class_ $ H.ClassName "table-col-skill" ]
 
-    renderHeaderRow :: forall w. Array SkillCategory -> Array (HH.HTML w Action)
+    renderHeaderRow :: Array SkillCategory -> Array ComponentHTML
     renderHeaderRow = concatMap \c -> [ renderGapHeader $ leftGap c, renderSkillHeader c ]
 
-    renderGapHeader :: forall w. SkillCategoryGap -> HH.HTML w Action
+    renderGapHeader :: SkillCategoryGap -> ComponentHTML
     renderGapHeader gap =
       HH.th
         [ HP.classes $ H.ClassName <$> (cons "table-gap" $ MC.lookup gap gapHeaderClasses)
@@ -85,7 +93,7 @@ render { categoryClasses, skillClasses, gapHeaderClasses, gapClasses } =
         ]
         []
     
-    renderSkillHeader :: forall w. SkillCategory -> HH.HTML w Action
+    renderSkillHeader :: SkillCategory -> ComponentHTML
     renderSkillHeader category =
       HH.th
         [ HP.classes $ H.ClassName <$> (cons "table-category" $ MC.lookup category categoryClasses)
@@ -93,10 +101,10 @@ render { categoryClasses, skillClasses, gapHeaderClasses, gapClasses } =
         ]
         [ HH.text $ display category ]
 
-    renderRow :: forall w. SkillIndex -> Array SkillCategory -> Array (HH.HTML w Action)
+    renderRow :: SkillIndex -> Array SkillCategory -> Array ComponentHTML
     renderRow index = concatMap \c -> [ renderGapCell index c, renderSkillCell index c ]
 
-    renderGapCell :: forall w. SkillIndex -> SkillCategory -> HH.HTML w Action
+    renderGapCell :: SkillIndex -> SkillCategory -> ComponentHTML
     renderGapCell index category =
       let skill = Skill category index
       in HH.td
@@ -105,7 +113,7 @@ render { categoryClasses, skillClasses, gapHeaderClasses, gapClasses } =
         ]
         []
 
-    renderSkillCell :: forall w. SkillIndex -> SkillCategory -> HH.HTML w Action
+    renderSkillCell :: SkillIndex -> SkillCategory -> ComponentHTML
     renderSkillCell index category = 
       let skill = Skill category index
       in HH.td
@@ -114,7 +122,7 @@ render { categoryClasses, skillClasses, gapHeaderClasses, gapClasses } =
         ]
         [ HH.text $ display skill ]
 
-handleAction :: forall m. Action -> H.HalogenM State Action ChildSlots Message m Unit
+handleAction :: Action -> H.HalogenM State Action ChildSlots Message MonadType Unit
 handleAction = case _ of
   HandleInput input -> do
     H.put input

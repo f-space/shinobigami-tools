@@ -6,11 +6,12 @@ import App.Config as Config
 import App.Home as Home
 import App.Model (Option, SkillColumn, SkillTable)
 import App.View as View
+import Data.Const (Const)
 import Data.Enum (class Enum, pred, succ)
 import Data.Maybe (Maybe(..))
 import Data.Set (Set, empty)
 import Data.Symbol (SProxy(..))
-import Effect.Class (class MonadEffect)
+import Effect.Aff (Aff)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
@@ -31,11 +32,23 @@ data Action
   | SetGaps (SkillColumn Boolean)
   | SetOptions (Set Option)
 
+type Query = Const Void
+
+type Input = Unit
+
+type Message = Unit
+
+type Slot slot = H.Slot Query Message slot
+
 type ChildSlots =
   ( home :: Home.Slot Unit
   , config :: Config.Slot Unit
   , view :: View.Slot Unit
   )
+
+type MonadType = Aff
+
+type ComponentHTML = H.ComponentHTML Action ChildSlots MonadType
 
 derive instance eqPage :: Eq Page
 derive instance ordPage :: Ord Page
@@ -56,7 +69,7 @@ _config = SProxy
 _view :: SProxy "view"
 _view = SProxy
 
-component :: forall q i o m. MonadEffect m => H.Component HH.HTML q i o m
+component :: H.Component HH.HTML Query Input Message MonadType
 component =
   H.mkComponent
     { initialState
@@ -72,7 +85,7 @@ initialState _ =
   , options: empty
   }
 
-render :: forall m. MonadEffect m => State -> H.ComponentHTML Action ChildSlots m
+render :: State -> ComponentHTML
 render state =
   HH.div
     [ HP.id_ "container" ]
@@ -113,7 +126,7 @@ handleConfigMessage (Config.GapChanged gaps) = Just $ SetGaps gaps
 handleConfigMessage (Config.OptionChanged options) = Just $ SetOptions options
 handleConfigMessage Config.Done = Go <$> succ Config
 
-handleAction :: forall o m. Action -> H.HalogenM State Action ChildSlots o m Unit
+handleAction :: Action -> H.HalogenM State Action ChildSlots Message MonadType Unit
 handleAction = case _ of
   Go p -> do
     H.modify_ (_ { page = p })
