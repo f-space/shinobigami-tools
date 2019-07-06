@@ -46,8 +46,8 @@ data Mode = RouteMode | CostMode
 data Action
   = HandleInput Input
   | SelectMode Mode
-  | ToggleCategory SkillCategory
   | SelectSkill Skill
+  | ToggleHealth SkillCategory
   | ToggleParalysis Skill
   | ToggleBarrier SkillCategoryGap
 
@@ -199,7 +199,7 @@ render { mode, selection, health, paralysis, barriers, skills, gaps, options } =
           | otherwise = Nothing
 
 handleMessage :: Table.Message -> Maybe Action
-handleMessage (Table.CategoryClicked category) = Just $ ToggleCategory category
+handleMessage (Table.CategoryClicked category) = Just $ ToggleHealth category
 handleMessage (Table.SkillClicked skill) = Just $ SelectSkill skill
 handleMessage (Table.GapClicked gap) = Just $ ToggleBarrier gap
 handleMessage (Table.SkillHeld skill) = Just $ ToggleParalysis skill
@@ -210,10 +210,10 @@ handleAction = case _ of
     H.put $ initialState input
   SelectMode mode -> do
     H.modify_ \s -> s { mode = mode }
-  ToggleCategory category -> do
-    H.modify_ \s -> s { health = MC.modify category not s.health }
   SelectSkill skill -> do
     H.modify_ \s -> s { selection = if Just skill == s.selection then Nothing else Just skill }
+  ToggleHealth category -> do
+    H.modify_ \s -> s { health = MC.modify category not s.health }
   ToggleParalysis skill -> do
     H.modify_ \s -> s { paralysis = MT.modify skill not s.paralysis }
   ToggleBarrier gap -> do
