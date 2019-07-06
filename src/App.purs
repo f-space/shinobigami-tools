@@ -2,7 +2,7 @@ module App (component) where
 
 import Prelude
 
-import App.Config as Config
+import App.Edit as Edit
 import App.Home as Home
 import App.Model (Option, SkillColumn, SkillTable)
 import App.View as View
@@ -17,7 +17,7 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 
-data Page = Home | Config | View
+data Page = Home | Edit | View
 
 type State =
   { page :: Page 
@@ -42,7 +42,7 @@ type Slot slot = H.Slot Query Message slot
 
 type ChildSlots =
   ( home :: Home.Slot Unit
-  , config :: Config.Slot Unit
+  , edit :: Edit.Slot Unit
   , view :: View.Slot Unit
   )
 
@@ -54,17 +54,17 @@ derive instance eqPage :: Eq Page
 derive instance ordPage :: Ord Page
 instance enumPage :: Enum Page where
   pred Home = Nothing
-  pred Config = Just Home
-  pred View = Just Config
-  succ Home = Just Config
-  succ Config = Just View
+  pred Edit = Just Home
+  pred View = Just Edit
+  succ Home = Just Edit
+  succ Edit = Just View
   succ View = Nothing
 
 _home :: SProxy "home"
 _home = SProxy
 
-_config :: SProxy "config"
-_config = SProxy
+_edit :: SProxy "edit"
+_edit = SProxy
 
 _view :: SProxy "view"
 _view = SProxy
@@ -94,7 +94,7 @@ render state =
       , HP.attr (H.AttrName "data-page") $ pageId state.page
       ]
       [ HH.slot _home unit Home.component unit handleHomeMessage
-      , HH.slot _config unit Config.component (configInpug state) handleConfigMessage
+      , HH.slot _edit unit Edit.component (editInput state) handleEditMessage
       , HH.slot _view unit View.component (viewInput state) $ const Nothing
       ]
     , HH.button
@@ -108,11 +108,11 @@ render state =
     pageId :: Page -> String
     pageId = case _ of
       Home -> "home"
-      Config -> "config"
+      Edit -> "edit"
       View -> "view"
     
-    configInpug :: State -> Config.Input
-    configInpug { skills, gaps, options } = { skills, gaps, options }
+    editInput :: State -> Edit.Input
+    editInput { skills, gaps, options } = { skills, gaps, options }
 
     viewInput :: State -> View.Input
     viewInput { skills, gaps, options } = { skills, gaps, options }
@@ -120,11 +120,11 @@ render state =
 handleHomeMessage :: Home.Message -> Maybe Action
 handleHomeMessage Home.Done = Go <$> succ Home
 
-handleConfigMessage :: Config.Message -> Maybe Action
-handleConfigMessage (Config.SkillChanged skills) = Just $ SetSkills skills
-handleConfigMessage (Config.GapChanged gaps) = Just $ SetGaps gaps
-handleConfigMessage (Config.OptionChanged options) = Just $ SetOptions options
-handleConfigMessage Config.Done = Go <$> succ Config
+handleEditMessage :: Edit.Message -> Maybe Action
+handleEditMessage (Edit.SkillChanged skills) = Just $ SetSkills skills
+handleEditMessage (Edit.GapChanged gaps) = Just $ SetGaps gaps
+handleEditMessage (Edit.OptionChanged options) = Just $ SetOptions options
+handleEditMessage Edit.Done = Go <$> succ Edit
 
 handleAction :: Action -> H.HalogenM State Action ChildSlots Message MonadType Unit
 handleAction = case _ of

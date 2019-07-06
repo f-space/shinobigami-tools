@@ -1,4 +1,4 @@
-module App.Config
+module App.Edit
   ( component
   , Query
   , Input
@@ -83,7 +83,7 @@ initialState { skills, gaps, options } =
 render :: State -> ComponentHTML
 render { selectionMode, skills, gaps, options } =
   HH.div
-    [ HP.id_ "config"
+    [ HP.id_ "edit"
     , HP.classes $ H.ClassName <$> if selectionMode then ["selection-mode"] else []
     ]
     [ HH.slot _table unit Table.component tableInput

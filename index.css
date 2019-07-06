@@ -46,7 +46,7 @@ td { display: table-cell; }
 	transform: none;
 }
 
-#track[data-page="config"] {
+#track[data-page="edit"] {
 	transform: translateX(-100%);
 }
 
@@ -68,7 +68,7 @@ td { display: table-cell; }
 	overflow: hidden;
 }
 
-#config {
+#edit {
 	align-items: center;
 	display: flex;
 	flex-flow: column nowrap;
