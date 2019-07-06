@@ -34,6 +34,7 @@ type State =
   { mode :: Mode
   , selection :: Maybe Skill
   , health :: SkillColumn Boolean
+  , paralysis :: SkillTable Boolean
   , barriers :: SkillColumn Boolean
   , skills :: SkillTable Boolean
   , gaps :: SkillColumn Boolean
@@ -47,6 +48,7 @@ data Action
   | SelectMode Mode
   | ToggleCategory SkillCategory
   | SelectSkill Skill
+  | ToggleParalysis Skill
   | ToggleBarrier SkillCategoryGap
 
 type Query = Const Void
@@ -92,6 +94,7 @@ initialState { skills, gaps, options } =
   { mode: RouteMode
   , selection: Nothing
   , health: pure true
+  , paralysis: pure false
   , barriers: pure false
   , skills
   , gaps
@@ -99,7 +102,7 @@ initialState { skills, gaps, options } =
   }
 
 render :: State -> ComponentHTML
-render { mode, selection, barriers, skills, gaps, options, health } =
+render { mode, selection, health, paralysis, barriers, skills, gaps, options } =
   HH.div
     [ HP.id_ "view" ]
     [ HH.slot _table unit Table.component tableInput handleMessage
@@ -124,7 +127,8 @@ render { mode, selection, barriers, skills, gaps, options, health } =
     graph :: Maybe MG.SkillGraph
     graph =
       let
-        table = (&&) <$> skills <*> MC.toSkillTable health
+        enabled = (\a b -> a && not b) <$> MC.toSkillTable health <*> paralysis
+        table = (&&) <$> skills <*> enabled
         transform = MGO.toTransform $ MO.toGraphOptions gaps barriers options
       in MG.build table transform
 
@@ -158,8 +162,9 @@ render { mode, selection, barriers, skills, gaps, options, health } =
     skillClasses = case mode of
       RouteMode ->
         let
+          disabled = (if _ then ["disabled"] else []) <$> paralysis
           acquired = (if _ then ["acquired"] else []) <$> skills
-          merged = (<>) <$> MC.toSkillTable categoryClasses <*> acquired
+          merged = (<>) <$> MC.toSkillTable categoryClasses <*> ((<>) <$> disabled <*> acquired)
         in merged # execState do
           for_ route \skill -> modify_ $ MT.modify skill (_ `snoc` "route")
           for_ selection \skill -> modify_ $ MT.modify skill (_ `snoc` "selected")
@@ -197,6 +202,7 @@ handleMessage :: Table.Message -> Maybe Action
 handleMessage (Table.CategoryClicked category) = Just $ ToggleCategory category
 handleMessage (Table.SkillClicked skill) = Just $ SelectSkill skill
 handleMessage (Table.GapClicked gap) = Just $ ToggleBarrier gap
+handleMessage (Table.SkillHeld skill) = Just $ ToggleParalysis skill
 
 handleAction :: Action -> H.HalogenM State Action ChildSlots Message MonadType Unit
 handleAction = case _ of
@@ -208,6 +214,8 @@ handleAction = case _ of
     H.modify_ \s -> s { health = MC.modify category not s.health }
   SelectSkill skill -> do
     H.modify_ \s -> s { selection = if Just skill == s.selection then Nothing else Just skill }
+  ToggleParalysis skill -> do
+    H.modify_ \s -> s { paralysis = MT.modify skill not s.paralysis }
   ToggleBarrier gap -> do
     { gaps } <- H.get
     if not $ MC.lookup gap gaps
