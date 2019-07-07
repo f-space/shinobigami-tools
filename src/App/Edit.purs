@@ -1,5 +1,6 @@
-module App.Config
+module App.Edit
   ( component
+  , Query
   , Input
   , Message(..)
   , Slot
@@ -17,7 +18,7 @@ import Data.Const (Const)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Set (Set, empty, filter, insert)
 import Data.Symbol (SProxy(..))
-import Effect.Class (class MonadEffect)
+import Effect.Aff (Aff)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
@@ -41,6 +42,8 @@ data Action
   | Clear
   | Complete
 
+type Query = Const Void
+
 type Input =
   { skills :: SkillTable Boolean
   , gaps :: SkillColumn Boolean
@@ -53,14 +56,16 @@ data Message
   | OptionChanged (Set Option)
   | Done
 
-type Slot index = H.Slot (Const Void) Message index
+type Slot slot = H.Slot Query Message slot
 
 type ChildSlots = ( table :: Table.Slot Unit )
+
+type ComponentHTML = H.ComponentHTML Action ChildSlots Aff
 
 _table :: SProxy "table"
 _table = SProxy
 
-component :: forall q m. MonadEffect m => H.Component HH.HTML q Input Message m
+component :: H.Component HH.HTML Query Input Message Aff
 component =
   H.mkComponent
     { initialState
@@ -75,10 +80,10 @@ initialState :: Input -> State
 initialState { skills, gaps, options } =
   { selectionMode: false, skills, gaps, options }
 
-render :: forall m. State -> H.ComponentHTML Action ChildSlots m
+render :: State -> ComponentHTML
 render { selectionMode, skills, gaps, options } =
   HH.div
-    [ HP.id_ "config"
+    [ HP.id_ "edit"
     , HP.classes $ H.ClassName <$> if selectionMode then ["selection-mode"] else []
     ]
     [ HH.slot _table unit Table.component tableInput
@@ -104,7 +109,7 @@ render { selectionMode, skills, gaps, options } =
       [ HH.text "決定" ]
     ]
   where
-    renderOption :: forall w. Boolean -> String -> Action -> HH.HTML w Action
+    renderOption :: Boolean -> String -> Action -> ComponentHTML
     renderOption value label action =
       HH.span
         [ HP.classes $ H.ClassName <$> cons "option" if value then ["checked"] else []
@@ -131,12 +136,13 @@ handleMessage :: Table.Message -> Maybe Action
 handleMessage (Table.CategoryClicked category) = Just $ SelectCategory category
 handleMessage (Table.SkillClicked skill) = Just $ ToggleSkill skill
 handleMessage (Table.GapClicked gap) = Just $ ToggleGap gap
+handleMessage _ = Nothing
 
 handleSelectionMessage :: Table.Message -> Maybe Action
 handleSelectionMessage (Table.SkillClicked skill) = Just $ SelectYoriSkill skill
 handleSelectionMessage _ = Nothing
 
-handleAction :: forall m. MonadEffect m => Action -> H.HalogenM State Action ChildSlots Message m Unit
+handleAction :: Action -> H.HalogenM State Action ChildSlots Message Aff Unit
 handleAction = case _ of
   HandleInput { skills, gaps, options } -> do
     H.modify_ \s -> s { skills = skills, gaps = gaps, options = options }

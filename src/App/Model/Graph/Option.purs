@@ -6,9 +6,10 @@ module App.Model.Graph.Option
 import Prelude
 
 import App.Model.Graph (Transform)
-import App.Model.Graph.Transform (diagonalFrom, stretchGap, wrapCategory, wrapIndex)
+import App.Model.Graph.Transform (betweenCategory, betweenIndex, diagonalFrom, stretchGap, wrapCategory, wrapIndex)
 import App.Model.Skill (Skill, SkillCategoryGap)
-import Data.Array (catMaybes, foldMap, mapMaybe)
+import Data.Array (catMaybes, mapMaybe)
+import Data.Foldable (fold)
 import Data.Maybe (Maybe(..))
 import Data.Set (Set, member, toUnfoldable)
 import Data.Tuple (Tuple(..), uncurry)
@@ -28,10 +29,12 @@ toTransform options =
     array = toUnfoldable options
     gaps = mapMaybe stretchedGaps array
     diagonal = mapMaybe diagonalTarget array
-  in foldMap identity $
+  in fold $
     catMaybes
-      [ if WrapCategory `member` options then Just wrapCategory else Nothing
-      , if WrapIndex `member` options then Just wrapIndex else Nothing
+      [ Just $ betweenCategory 1 2
+      , Just $ betweenIndex 0 1
+      , if WrapCategory `member` options then Just $ wrapCategory 1 2 else Nothing
+      , if WrapIndex `member` options then Just $ wrapIndex 0 1 else Nothing
       ]
     <> (uncurry stretchGap <$> gaps)
     <> (diagonalFrom <$> diagonal)

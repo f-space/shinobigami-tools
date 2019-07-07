@@ -1,5 +1,6 @@
 module App.Table
   ( component
+  , Query
   , Input
   , Message(..)
   , Slot
@@ -7,12 +8,15 @@ module App.Table
 
 import Prelude
 
+import App.Gesture as Gesture
 import App.Model (Skill(..), SkillCategory, SkillCategoryGap, SkillColumn, SkillIndex, SkillTable, categories, display, indices, leftGap)
 import App.Model.Column as MC
 import App.Model.Table as MT
 import Data.Array (concatMap, cons)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..))
+import Data.Symbol (SProxy(..))
+import Effect.Aff (Aff)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
@@ -25,6 +29,9 @@ data Action
   | ClickCategory SkillCategory
   | ClickSkill Skill
   | ClickGap SkillCategoryGap
+  | HoldSkill Skill
+
+type Query = Const Void
 
 type Input =
   { categoryClasses :: SkillColumn (Array String)
@@ -37,12 +44,20 @@ data Message
   = CategoryClicked SkillCategory
   | SkillClicked Skill
   | GapClicked SkillCategoryGap
+  | SkillHeld Skill
 
-type Slot index = H.Slot (Const Void) Message index
+type Slot slot = H.Slot Query Message slot
 
-type ChildSlots = ()
+type ChildSlots = ( cell :: Gesture.Slot Skill )
 
-component :: forall q m. H.Component HH.HTML q Input Message m
+_cell :: SProxy "cell"
+_cell = SProxy
+
+type MonadType = Aff
+
+type ComponentHTML = H.ComponentHTML Action ChildSlots MonadType
+
+component :: H.Component HH.HTML Query Input Message MonadType
 component =
   H.mkComponent
     { initialState
@@ -56,7 +71,7 @@ component =
 initialState :: Input -> State
 initialState = identity
 
-render :: forall m. State -> H.ComponentHTML Action ChildSlots m
+render :: State -> ComponentHTML
 render { categoryClasses, skillClasses, gapHeaderClasses, gapClasses } =
   HH.table
     [ HP.class_ $ H.ClassName "table" ]
@@ -65,19 +80,19 @@ render { categoryClasses, skillClasses, gapHeaderClasses, gapClasses } =
     , HH.tbody_ $ HH.tr_ <<< flip renderRow categories <$> indices
     ]
   where
-    renderColumns :: forall w i. Array SkillCategory -> Array (HH.HTML w i)
+    renderColumns :: Array SkillCategory -> Array ComponentHTML
     renderColumns = concatMap \c -> [ renderGapColumn, renderSkillColumn ]
   
-    renderGapColumn :: forall w i. HH.HTML w i
+    renderGapColumn :: ComponentHTML
     renderGapColumn = HH.col [ HP.class_ $ H.ClassName "table-col-gap" ]
     
-    renderSkillColumn :: forall w i. HH.HTML w i
+    renderSkillColumn :: ComponentHTML
     renderSkillColumn = HH.col [ HP.class_ $ H.ClassName "table-col-skill" ]
 
-    renderHeaderRow :: forall w. Array SkillCategory -> Array (HH.HTML w Action)
+    renderHeaderRow :: Array SkillCategory -> Array ComponentHTML
     renderHeaderRow = concatMap \c -> [ renderGapHeader $ leftGap c, renderSkillHeader c ]
 
-    renderGapHeader :: forall w. SkillCategoryGap -> HH.HTML w Action
+    renderGapHeader :: SkillCategoryGap -> ComponentHTML
     renderGapHeader gap =
       HH.th
         [ HP.classes $ H.ClassName <$> (cons "table-gap" $ MC.lookup gap gapHeaderClasses)
@@ -85,7 +100,7 @@ render { categoryClasses, skillClasses, gapHeaderClasses, gapClasses } =
         ]
         []
     
-    renderSkillHeader :: forall w. SkillCategory -> HH.HTML w Action
+    renderSkillHeader :: SkillCategory -> ComponentHTML
     renderSkillHeader category =
       HH.th
         [ HP.classes $ H.ClassName <$> (cons "table-category" $ MC.lookup category categoryClasses)
@@ -93,10 +108,10 @@ render { categoryClasses, skillClasses, gapHeaderClasses, gapClasses } =
         ]
         [ HH.text $ display category ]
 
-    renderRow :: forall w. SkillIndex -> Array SkillCategory -> Array (HH.HTML w Action)
+    renderRow :: SkillIndex -> Array SkillCategory -> Array ComponentHTML
     renderRow index = concatMap \c -> [ renderGapCell index c, renderSkillCell index c ]
 
-    renderGapCell :: forall w. SkillIndex -> SkillCategory -> HH.HTML w Action
+    renderGapCell :: SkillIndex -> SkillCategory -> ComponentHTML
     renderGapCell index category =
       let skill = Skill category index
       in HH.td
@@ -105,16 +120,22 @@ render { categoryClasses, skillClasses, gapHeaderClasses, gapClasses } =
         ]
         []
 
-    renderSkillCell :: forall w. SkillIndex -> SkillCategory -> HH.HTML w Action
+    renderSkillCell :: SkillIndex -> SkillCategory -> ComponentHTML
     renderSkillCell index category = 
       let skill = Skill category index
-      in HH.td
-        [ HP.classes $ H.ClassName <$> (cons "table-skill" $ MT.lookup skill skillClasses)
-        , HE.onClick \_ -> Just $ ClickSkill skill
-        ]
+      in HH.slot _cell skill Gesture.component (cellInput skill) $ handleCellMessage skill
+
+    cellInput :: Skill -> Gesture.Input
+    cellInput skill = Gesture.Renderer \props ->
+      HH.td
+        ([ HP.classes $ H.ClassName <$> (cons "table-skill" $ MT.lookup skill skillClasses) ] <> props)
         [ HH.text $ display skill ]
 
-handleAction :: forall m. Action -> H.HalogenM State Action ChildSlots Message m Unit
+handleCellMessage :: Skill -> Gesture.Message -> Maybe Action
+handleCellMessage skill (Gesture.Tapped) = Just $ ClickSkill skill
+handleCellMessage skill (Gesture.LongTapped) = Just $ HoldSkill skill
+
+handleAction :: Action -> H.HalogenM State Action ChildSlots Message MonadType Unit
 handleAction = case _ of
   HandleInput input -> do
     H.put input
@@ -124,3 +145,5 @@ handleAction = case _ of
     H.raise $ SkillClicked skill
   ClickGap gap -> do
     H.raise $ GapClicked gap
+  HoldSkill skill -> do
+    H.raise $ SkillHeld skill
