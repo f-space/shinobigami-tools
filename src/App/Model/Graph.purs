@@ -19,12 +19,13 @@ import App.Model.Table as Table
 import App.Model.Table.ST (STSkillTable)
 import App.Model.Table.ST as ST
 import Control.Monad.ST (ST, run, while)
-import Data.Array (cons, fold, null, snoc, sortBy, uncons)
-import Data.Foldable (for_)
+import Data.Array (cons, null, snoc, sortBy, uncons, zip, zipWith)
+import Data.Foldable (fold, for_)
 import Data.Lazy (Lazy, defer, force)
 import Data.Maybe (Maybe(..), fromJust)
-import Data.Set (Set, difference, empty, insert, isEmpty, singleton, size, toUnfoldable, union)
-import Data.Traversable (for)
+import Data.Set (Set, difference, empty, insert, intersection, isEmpty, singleton, size, toUnfoldable, union)
+import Data.Traversable (for, scanl)
+import Data.Tuple (uncurry)
 import Partial.Unsafe (unsafePartial)
 
 newtype SkillGraph = SkillGraph (SkillTable Node)
@@ -38,7 +39,7 @@ type Edge =
 type Node =
   { cost :: Int
   , edges :: Array Edge
-  , leaves :: Array Skill
+  , leaves :: Set Skill
   }
 
 newtype Transform = Transform (Skill -> Set Skill -> Array Edge -> Array Edge)
@@ -149,7 +150,7 @@ optimizeGraph table = for table \node ->
     then Just
       { cost: node.cost
       , edges: pruneEdges table node.leaves $ toUnfoldable node.edges
-      , leaves: toUnfoldable node.leaves
+      , leaves: node.leaves
       }
     else Nothing
 
@@ -177,14 +178,26 @@ pruneEdges table goals edges = step goals (defer \_ -> withLeaves <$> edges) []
     sortEdges = sortBy \a b -> compare (size b.leaves) (size a.leaves) <> compare b.edge a.edge
 
 routes :: Skill -> SkillGraph -> Routes
-routes to (SkillGraph table) = Routes $ walk to
+routes to (SkillGraph table) = Routes $ walk to $ getLeaves to
   where
-    walk :: Skill -> RouteTree Skill
-    walk skill =
-      let node @ { edges } = Table.lookup skill table
-      in if null edges
-        then Cons skill Nil
-        else Cons skill $ fold $ walk <<< _.to <$> edges
+    walk :: Skill -> Set Skill -> RouteTree Skill
+    walk skill rest =
+      if isEmpty rest
+        then Nil
+        else
+          let { edges } = Table.lookup skill table
+          in if null edges
+            then Cons skill Nil
+            else Cons skill
+              let
+                skills = _.to <$> edges
+                leaves = getLeaves <$> skills
+                candidates = cons rest $ scanl difference rest leaves
+                rests = zipWith intersection leaves candidates
+              in fold $ uncurry walk <$> zip skills rests
+      
+    getLeaves :: Skill -> Set Skill
+    getLeaves skill = _.leaves $ Table.lookup skill table
 
 paths :: Routes -> Array (Array Skill)
 paths (Routes tree) = walk tree
