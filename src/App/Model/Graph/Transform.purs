@@ -1,5 +1,7 @@
 module App.Model.Graph.Transform
-  ( wrapCategory
+  ( betweenCategory
+  , betweenIndex
+  , wrapCategory
   , wrapIndex
   , stretchGap
   , diagonalFrom
@@ -9,33 +11,52 @@ import Prelude
 
 import App.Model.Graph (Transform(..))
 import App.Model.Skill (Skill(..), SkillCategoryGap, getCategory, getIndex, leftCategory, rightCategory)
-import Data.Array (filter, null)
+import Data.Array (catMaybes, filter)
+import Data.Enum (pred, succ)
+import Data.Maybe (Maybe(..))
+import Data.Set (member)
 
-wrapCategory :: Transform
-wrapCategory = Transform \skill _ edges ->
-  let
-    category = getCategory skill
-    index = getIndex skill
-  in edges
-    <> if category == top
-      then [{ cost: 2, to: Skill bottom index }]
-      else []
-    <> if category == bottom
-      then [{ cost: 2, to: Skill top index }]
-      else []
+betweenCategory :: Int -> Int -> Transform
+betweenCategory priority cost = Transform \skill _ edges ->
+  edges <>
+    let
+      category = getCategory skill
+      index = getIndex skill
+      makeEdge c = { priority, cost, to: Skill c index }
+    in makeEdge <$> catMaybes [pred category, succ category]
 
-wrapIndex :: Transform
-wrapIndex = Transform \skill _ edges ->
-  let
-    category = getCategory skill
-    index = getIndex skill
-  in edges
-    <> if index == top
-      then [{ cost: 1, to: Skill category bottom }]
-      else []
-    <> if index == bottom
-      then [{ cost: 1, to: Skill category top }]
-      else []
+betweenIndex :: Int -> Int -> Transform
+betweenIndex priority cost = Transform \skill _ edges ->
+  edges <>
+    let
+      category = getCategory skill
+      index = getIndex skill
+      makeEdge i = { priority, cost, to: Skill category i }
+    in makeEdge <$> catMaybes [pred index, succ index]
+
+wrapCategory :: Int -> Int -> Transform
+wrapCategory priority cost = Transform \skill _ edges ->
+  edges <>
+    let
+      category = getCategory skill
+      index = getIndex skill
+      makeEdge c = { priority, cost, to: Skill c index }
+    in makeEdge <$> catMaybes
+      [ if category == top then Just bottom else Nothing
+      , if category == bottom then Just top else Nothing
+      ]
+
+wrapIndex :: Int -> Int -> Transform
+wrapIndex priority cost = Transform \skill _ edges ->
+  edges <>
+    let
+      category = getCategory skill
+      index = getIndex skill
+      makeEdge i = { priority, cost, to: Skill category i }
+    in makeEdge <$> catMaybes
+      [ if index == top then Just bottom else Nothing
+      , if index == bottom then Just top else Nothing
+      ]
 
 stretchGap :: Int -> SkillCategoryGap -> Transform
 stretchGap delta gap = Transform \skill _ edges ->
@@ -51,9 +72,9 @@ stretchGap delta gap = Transform \skill _ edges ->
       else edge
 
 diagonalFrom :: Skill -> Transform
-diagonalFrom target = Transform \skill path edges ->
+diagonalFrom target = Transform \skill starts edges ->
   edges <>
-    if null path && skill == target
+    if skill == target && target `member` starts
       then
         let
           category = getCategory skill
@@ -63,7 +84,8 @@ diagonalFrom target = Transform \skill path edges ->
         in do
           v <- edgeV
           h <- edgeH
+          let priority = max v.priority h.priority + 1
           let cost = v.cost + h.cost - 1
           let to = Skill (getCategory h.to) (getIndex v.to)
-          pure { cost, to }
+          pure { priority, cost, to }
       else []

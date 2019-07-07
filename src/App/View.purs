@@ -16,7 +16,7 @@ import App.Model.Option as MO
 import App.Model.Table as MT
 import App.Table as Table
 import Control.Monad.State (execState, modify_)
-import Data.Array (cons, drop, head, snoc, zip)
+import Data.Array (concat, cons, drop, head, nub, snoc, zip)
 import Data.Const (Const)
 import Data.Enum (pred, succ)
 import Data.Foldable (for_)
@@ -107,7 +107,7 @@ render { mode, selection, health, paralysis, barriers, skills, gaps, options } =
     [ HP.id_ "view" ]
     [ HH.slot _table unit Table.component tableInput handleMessage
     , HH.div_
-      [ HH.text $ "目標値: " <> (maybe "-" (show <<< (_ + 5)) $ MG.cost <$> graph <*> selection) ]
+      [ HH.text $ "目標値: " <> (maybe "-" (show <<< (_ + 5)) $ MG.cost <$> selection <*> graph) ]
     , HH.div
       [ HP.class_ $ H.ClassName "modes" ]
       [ renderMode RouteMode "経路"
@@ -132,11 +132,17 @@ render { mode, selection, health, paralysis, barriers, skills, gaps, options } =
         transform = MGO.toTransform $ MO.toGraphOptions gaps barriers options
       in MG.build table transform
 
-    route :: Array Skill
-    route = fromMaybe [] $ MG.route <$> graph <*> selection
+    routes :: MG.Routes
+    routes = fromMaybe mempty $ MG.routes <$> selection <*> graph
+
+    subpaths :: Array (Array Skill)
+    subpaths = MG.subpaths routes
+
+    routeSkills :: Array Skill
+    routeSkills = nub $ concat subpaths
 
     costTable :: SkillTable Int
-    costTable = maybe (MT.fill $ top) (MT.fillWith <<< MG.cost) graph
+    costTable = maybe (MT.fill $ top) (MT.fillWith <<< flip MG.cost) graph
   
     renderMode :: Mode -> String -> ComponentHTML
     renderMode value label =
@@ -166,7 +172,7 @@ render { mode, selection, health, paralysis, barriers, skills, gaps, options } =
           acquired = (if _ then ["acquired"] else []) <$> skills
           merged = (<>) <$> MC.toSkillTable categoryClasses <*> ((<>) <$> disabled <*> acquired)
         in merged # execState do
-          for_ route \skill -> modify_ $ MT.modify skill (_ `snoc` "route")
+          for_ routeSkills \skill -> modify_ $ MT.modify skill (_ `snoc` "route")
           for_ selection \skill -> modify_ $ MT.modify skill (_ `snoc` "selected")
       CostMode ->
         (\x -> ["cost-" <> (show $ min 8 x)]) <$> costTable
@@ -182,13 +188,14 @@ render { mode, selection, health, paralysis, barriers, skills, gaps, options } =
     gapClasses = case mode of
       RouteMode ->
         MC.toSkillTable gapHeaderClasses # execState do
-          let zipped = zip route (drop 1 route)
-          for_ zipped $ uncurry \x y ->
-            case onRoute (getCategory x) (getCategory y) of
-              Just gap ->
-                let skill = Skill (rightCategory gap) (getIndex y)
-                in modify_ $ MT.modify skill (_ `snoc` "route")
-              Nothing -> pure unit
+          for_ subpaths \subpath -> do
+            let zipped = zip subpath (drop 1 subpath)
+            for_ zipped $ uncurry \x y ->
+              case onRoute (getCategory x) (getCategory y) of
+                Just gap ->
+                  let skill = Skill (rightCategory gap) (getIndex y)
+                  in modify_ $ MT.modify skill (_ `snoc` "route")
+                Nothing -> pure unit
       CostMode ->
         MC.toSkillTable gapHeaderClasses
       where
