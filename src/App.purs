@@ -97,9 +97,8 @@ render state =
       , HH.slot _edit unit Edit.component (editInput state) handleEditMessage
       , HH.slot _view unit View.component (viewInput state) $ const Nothing
       ]
-    , HH.button
+    , HH.div
       [ HP.id_ "back"
-      , HP.type_ HP.ButtonButton
       , HE.onClick \_ -> Go <$> pred state.page
       ]
       [ HH.text "戻る" ]

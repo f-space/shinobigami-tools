@@ -47,10 +47,10 @@ initialState = const unit
 
 render :: State -> ComponentHTML
 render _ =
-  HH.div
+  HH.section
     [ HP.id_ "home" ]
-    [ HH.button
-      [ HP.type_ HP.ButtonButton
+    [ HH.div
+      [ HP.class_ $ H.ClassName "start"
       , HE.onClick \_ -> Just Start
       ]
       [ HH.text "開始" ]
