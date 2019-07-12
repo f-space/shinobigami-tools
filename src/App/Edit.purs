@@ -33,7 +33,7 @@ type State =
 
 data Action
   = HandleInput Input
-  | SelectCategory SkillCategory
+  | ToggleCategory SkillCategory
   | ToggleSkill Skill
   | ToggleGap SkillCategoryGap
   | ToggleOption Option
@@ -138,7 +138,7 @@ render { selectionMode, skills, gaps, options } =
     gapClasses = MC.toSkillTable gapHeaderClasses
 
 handleMessage :: Table.Message -> Maybe Action
-handleMessage (Table.CategoryClicked category) = Just $ SelectCategory category
+handleMessage (Table.CategoryClicked category) = Just $ ToggleCategory category
 handleMessage (Table.SkillClicked skill) = Just $ ToggleSkill skill
 handleMessage (Table.GapClicked gap) = Just $ ToggleGap gap
 handleMessage _ = Nothing
@@ -151,10 +151,12 @@ handleAction :: Action -> H.HalogenM State Action ChildSlots Message Aff Unit
 handleAction = case _ of
   HandleInput { skills, gaps, options } -> do
     H.modify_ \s -> s { skills = skills, gaps = gaps, options = options }
-  SelectCategory category -> do
+  ToggleCategory category -> do
+    { gaps } <- H.get
     let left = leftGap category
     let right = rightGap category
-    H.raise $ GapChanged $ MC.fillWith \gap -> gap == left || gap == right
+    let value = MC.fillWith \gap -> gap == left || gap == right
+    H.raise $ GapChanged if value /= gaps then value else MC.fill false
   ToggleSkill skill -> do
     { skills } <- H.get
     H.raise $ SkillChanged $ MT.modify skill not skills
