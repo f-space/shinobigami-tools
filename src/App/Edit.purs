@@ -33,7 +33,7 @@ type State =
 
 data Action
   = HandleInput Input
-  | SelectCategory SkillCategory
+  | ToggleCategory SkillCategory
   | ToggleSkill Skill
   | ToggleGap SkillCategoryGap
   | ToggleOption Option
@@ -82,37 +82,42 @@ initialState { skills, gaps, options } =
 
 render :: State -> ComponentHTML
 render { selectionMode, skills, gaps, options } =
-  HH.div
+  HH.section
     [ HP.id_ "edit"
     , HP.classes $ H.ClassName <$> if selectionMode then ["selection-mode"] else []
     ]
-    [ HH.slot _table unit Table.component tableInput
+    [ HH.h1 [ HP.class_ $ H.ClassName "heading" ] [ HH.text "設定" ]
+    , HH.slot _table unit Table.component tableInput
         if selectionMode then handleSelectionMessage else handleMessage
     , HH.div
       [ HP.class_ $ H.ClassName "options"]
-      [ HH.div_ [ renderOption (MO.hasMakaikogaku options) "魔界工学" $ ToggleOption Makaikogaku ]
-      , HH.div_ [ renderOption (MO.hasMokuren options) "木蓮" $ ToggleOption Mokuren ]
-      , HH.div_
-        [ renderOption (MO.hasYori options) "妖理" $ ToggleYori
-        , HH.text $ maybe "" display $ head $ MO.yoriSkills options
-        ]
+      [ renderOption 0 (MO.hasMakaikogaku options) "魔界工学" $ ToggleOption Makaikogaku
+      , renderOption 1 (MO.hasMokuren options) "木蓮" $ ToggleOption Mokuren
+      , renderOption 2 (MO.hasYori options) "妖理" $ ToggleYori
+      , MO.yoriSkills options # head # maybe (HH.text "") \skill ->
+          HH.span
+            [ HP.class_ $ H.ClassName "suboption"
+            , HP.attr (H.AttrName "data-index") $ show 2
+            ]
+            [ HH.text $ display skill ]
       ]
-    , HH.button
-      [ HP.type_ HP.ButtonButton
+    , HH.div
+      [ HP.class_ $ H.ClassName "clear"
       , HE.onClick \_ -> Just Clear
       ]
       [ HH.text "白紙化"]
-    , HH.button
-      [ HP.type_ HP.ButtonButton
+    , HH.div
+      [ HP.class_ $ H.ClassName "complete"
       , HE.onClick \_ -> Just Complete
       ]
-      [ HH.text "決定" ]
+      [ HH.text "完了" ]
     ]
   where
-    renderOption :: Boolean -> String -> Action -> ComponentHTML
-    renderOption value label action =
+    renderOption :: Int -> Boolean -> String -> Action -> ComponentHTML
+    renderOption index value label action =
       HH.span
         [ HP.classes $ H.ClassName <$> cons "option" if value then ["checked"] else []
+        , HP.attr (H.AttrName "data-index") $ show index
         , HE.onClick \_ -> Just action
         ]
         [ HH.text label ]
@@ -133,7 +138,7 @@ render { selectionMode, skills, gaps, options } =
     gapClasses = MC.toSkillTable gapHeaderClasses
 
 handleMessage :: Table.Message -> Maybe Action
-handleMessage (Table.CategoryClicked category) = Just $ SelectCategory category
+handleMessage (Table.CategoryClicked category) = Just $ ToggleCategory category
 handleMessage (Table.SkillClicked skill) = Just $ ToggleSkill skill
 handleMessage (Table.GapClicked gap) = Just $ ToggleGap gap
 handleMessage _ = Nothing
@@ -146,10 +151,12 @@ handleAction :: Action -> H.HalogenM State Action ChildSlots Message Aff Unit
 handleAction = case _ of
   HandleInput { skills, gaps, options } -> do
     H.modify_ \s -> s { skills = skills, gaps = gaps, options = options }
-  SelectCategory category -> do
+  ToggleCategory category -> do
+    { gaps } <- H.get
     let left = leftGap category
     let right = rightGap category
-    H.raise $ GapChanged $ MC.fillWith \gap -> gap == left || gap == right
+    let value = MC.fillWith \gap -> gap == left || gap == right
+    H.raise $ GapChanged if value /= gaps then value else MC.fill false
   ToggleSkill skill -> do
     { skills } <- H.get
     H.raise $ SkillChanged $ MT.modify skill not skills

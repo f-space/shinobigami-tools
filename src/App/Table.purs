@@ -95,7 +95,7 @@ render { categoryClasses, skillClasses, gapHeaderClasses, gapClasses } =
     renderGapHeader :: SkillCategoryGap -> ComponentHTML
     renderGapHeader gap =
       HH.th
-        [ HP.classes $ H.ClassName <$> (cons "table-gap" $ MC.lookup gap gapHeaderClasses)
+        [ HP.classes $ H.ClassName <$> (cons "table-gap-header" $ MC.lookup gap gapHeaderClasses)
         , HE.onClick \_ -> Just $ ClickGap gap
         ]
         []

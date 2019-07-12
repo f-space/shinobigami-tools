@@ -16,12 +16,13 @@ import App.Model.Option as MO
 import App.Model.Table as MT
 import App.Table as Table
 import Control.Monad.State (execState, modify_)
-import Data.Array (concat, cons, drop, head, nub, snoc, zip)
+import Data.Array (concat, cons, drop, head, nub, singleton, snoc, zip)
 import Data.Const (Const)
 import Data.Enum (pred, succ)
-import Data.Foldable (for_)
+import Data.Foldable (foldl, for_)
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Set (Set)
+import Data.String (fromCodePointArray, toCodePointArray)
 import Data.Symbol (SProxy(..))
 import Data.Tuple (uncurry)
 import Effect.Aff (Aff)
@@ -103,24 +104,37 @@ initialState { skills, gaps, options } =
 
 render :: State -> ComponentHTML
 render { mode, selection, health, paralysis, barriers, skills, gaps, options } =
-  HH.div
-    [ HP.id_ "view" ]
-    [ HH.slot _table unit Table.component tableInput handleMessage
-    , HH.div_
-      [ HH.text $ "目標値: " <> (maybe "-" (show <<< (_ + 5)) $ MG.cost <$> selection <*> graph) ]
+  HH.section
+    [ HP.id_ "view"
+    , HP.class_ $ H.ClassName $ show mode <> "-mode"
+    ]
+    [ HH.h1 [ HP.class_ $ H.ClassName "heading" ] [ HH.text "判定" ]
+    , HH.slot _table unit Table.component tableInput handleMessage
+    , HH.div
+      [ HP.class_ $ H.ClassName "result" ]
+      [ HH.span
+        [ HP.class_ $ H.ClassName "result-label" ]
+        ( HH.span_ <<< singleton <<< HH.text <<< fromCodePointArray <<< singleton <$> toCodePointArray "目標値" )
+      , HH.span
+        [ HP.class_ $ H.ClassName "result-value" ]
+        [ HH.text $ maybe "無" (show <<< (_ + 5)) $ MG.cost <$> selection <*> graph ]
+      ]
     , HH.div
       [ HP.class_ $ H.ClassName "modes" ]
       [ renderMode RouteMode "経路"
       , renderMode CostMode "分布"
       ]
     , HH.div
-      [ HP.class_ $ H.ClassName "options"]
-      [ HH.div_ [ renderOption (MO.hasMakaikogaku options) "魔界工学" ]
-      , HH.div_ [ renderOption (MO.hasMokuren options) "木蓮" ]
-      , HH.div_
-        [ renderOption (MO.hasYori options) "妖理"
-        , HH.text $ maybe "" display $ head $ MO.yoriSkills options
-        ]
+      [ HP.class_ $ H.ClassName "options" ]
+      [ renderOption 0 (MO.hasMakaikogaku options) "魔界工学"
+      , renderOption 1 (MO.hasMokuren options) "木蓮"
+      , renderOption 2 (MO.hasYori options) "妖理"
+      , MO.yoriSkills options # head # maybe (HH.text "") \skill ->
+          HH.span
+            [ HP.class_ $ H.ClassName "suboption"
+            , HP.attr (H.AttrName "data-index") $ show 2
+            ]
+            [ HH.text $ display skill ]
       ]
     ]
   where
@@ -152,10 +166,12 @@ render { mode, selection, health, paralysis, barriers, skills, gaps, options } =
         ]
         [ HH.text label ]
   
-    renderOption :: Boolean -> String -> ComponentHTML
-    renderOption value label =
+    renderOption :: Int -> Boolean -> String -> ComponentHTML
+    renderOption index value label =
       HH.span
-        [ HP.classes $ H.ClassName <$> cons "option" if value then ["checked"] else [] ]
+        [ HP.classes $ H.ClassName <$> cons "option" if value then ["checked"] else []
+        , HP.attr (H.AttrName "data-index") $ show index
+        ]
         [ HH.text label ]
     
     tableInput :: Table.Input
@@ -165,17 +181,16 @@ render { mode, selection, health, paralysis, barriers, skills, gaps, options } =
     categoryClasses = (if _ then [] else ["disabled"]) <$> health
   
     skillClasses :: SkillTable (Array String)
-    skillClasses = case mode of
-      RouteMode ->
-        let
-          disabled = (if _ then ["disabled"] else []) <$> paralysis
-          acquired = (if _ then ["acquired"] else []) <$> skills
-          merged = (<>) <$> MC.toSkillTable categoryClasses <*> ((<>) <$> disabled <*> acquired)
-        in merged # execState do
-          for_ routeSkills \skill -> modify_ $ MT.modify skill (_ `snoc` "route")
-          for_ selection \skill -> modify_ $ MT.modify skill (_ `snoc` "selected")
-      CostMode ->
-        (\x -> ["cost-" <> (show $ min 8 x)]) <$> costTable
+    skillClasses =
+      let
+        disabled = MC.toSkillTable $ (if _ then [] else ["disabled"]) <$> health
+        paralyzed = (if _ then ["paralyzed"] else []) <$> paralysis
+        acquired = (if _ then ["acquired"] else []) <$> skills
+        cost = (singleton <<< append "cost-" <<< show) <$> costTable
+        merged = foldl (apply <<< map append) disabled [ paralyzed, acquired, cost ]
+      in merged # execState do
+        for_ routeSkills \skill -> modify_ $ MT.modify skill (_ `snoc` "route")
+        for_ selection \skill -> modify_ $ MT.modify skill (_ `snoc` "selected")
     
     gapHeaderClasses :: SkillColumn (Array String)
     gapHeaderClasses =
