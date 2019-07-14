@@ -175,18 +175,30 @@ td { display: table-cell; }
 .start {
 	animation: flicker 1s ease-in-out infinite alternate;
 	color: var(--white);
-	filter:
-		drop-shadow(-3px 0 0 var(--black))
-		drop-shadow(3px 0 0 var(--black))
-		drop-shadow(0 -3px 0 var(--black))
-		drop-shadow(0 3px 0 var(--black))
-		drop-shadow(-3px 0 0 var(--red))
-		drop-shadow(3px 0 0 var(--red))
-		drop-shadow(0 -3px 0 var(--red))
-		drop-shadow(0 3px 0 var(--red))
-		drop-shadow(0 0 10px var(--white));
+	filter: drop-shadow(0 0 10px var(--white));
 	font-size: 8rem;
 	font-weight: bold;
+	text-shadow:
+		-4px 0 0 var(--black),
+		-2.83px -2.83px 0 var(--black),
+		-2.83px 2.83px 0 var(--black),
+		0 -4px 0 var(--black),
+		0 4px 0 var(--black),
+		2.83px -2.83px 0 var(--black),
+		2.83px 2.83px 0 var(--black),
+		4px 0 0 var(--black),
+		-8px 0 0 var(--red),
+		-6.93px -4px 0 var(--red),
+		-6.93px 4px 0 var(--red),
+		-4px -6.93px 0 var(--red),
+		-4px 6.93px 0 var(--red),
+		0 -8px 0 var(--red),
+		0 8px 0 var(--red),
+		4px -6.93px 0 var(--red),
+		4px 6.93px 0 var(--red),
+		6.93px -4px 0 var(--red),
+		6.93px 4px 0 var(--red),
+		8px 0 0 var(--red);
 }
 
 .heading {
@@ -486,37 +498,53 @@ td { display: table-cell; }
 .clear {
 	align-self: flex-end;
 	color: var(--white);
-	filter:
-		drop-shadow(-3px 0 0 var(--black))
-		drop-shadow(3px 0 0 var(--black))
-		drop-shadow(0 -3px 0 var(--black))
-		drop-shadow(0 3px 0 var(--black))
-		drop-shadow(0 0 5px var(--white));
+	filter: drop-shadow(0 0 5px var(--white));
 	font-size: 3rem;
 	font-weight: bold;
 	grid-area: clear;
 	line-height: 1;
 	margin-block-end: 3rem;
+	text-shadow:
+		-3px 0 0 var(--black),
+		-2.12px -2.12px 0 var(--black),
+		-2.12px 2.12px 0 var(--black),
+		0 -3px 0 var(--black),
+		0 3px 0 var(--black),
+		2.12px -2.12px 0 var(--black),
+		2.12px 2.12px 0 var(--black),
+		3px 0 0 var(--black);
 }
 
 .complete {
 	align-self: flex-end;
 	color: var(--white);
-	filter:
-		drop-shadow(-3px 0 0 var(--black))
-		drop-shadow(3px 0 0 var(--black))
-		drop-shadow(0 -3px 0 var(--black))
-		drop-shadow(0 3px 0 var(--black))
-		drop-shadow(-3px 0 0 var(--red))
-		drop-shadow(3px 0 0 var(--red))
-		drop-shadow(0 -3px 0 var(--red))
-		drop-shadow(0 3px 0 var(--red))
-		drop-shadow(0 0 10px var(--white));
+	filter: drop-shadow(0 0 10px var(--white));
 	font-size: 4rem;
 	font-weight: bold;
 	grid-area: complete;
 	line-height: 1;
 	margin-block-end: 3rem;
+	text-shadow:
+		-3px 0 0 var(--black),
+		-2.12px -2.12px 0 var(--black),
+		-2.12px 2.12px 0 var(--black),
+		0 -3px 0 var(--black),
+		0 3px 0 var(--black),
+		2.12px -2.12px 0 var(--black),
+		2.12px 2.12px 0 var(--black),
+		3px 0 0 var(--black),
+		-6px 0 0 var(--red),
+		-5.2px -3px 0 var(--red),
+		-5.2px 3px 0 var(--red),
+		-3px -5.2px 0 var(--red),
+		-3px 5.2px 0 var(--red),
+		0 -6px 0 var(--red),
+		0 6px 0 var(--red),
+		3px -5.2px 0 var(--red),
+		3px 5.2px 0 var(--red),
+		5.2px -3px 0 var(--red),
+		5.2px 3px 0 var(--red),
+		6px 0 0 var(--red);
 }
 
 .result {
@@ -527,6 +555,27 @@ td { display: table-cell; }
 	font-weight: bold;
 	grid-area: result;
 	justify-content: center;
+	text-shadow:
+		-3px 0 0 var(--black),
+		-2.12px -2.12px 0 var(--black),
+		-2.12px 2.12px 0 var(--black),
+		0 -3px 0 var(--black),
+		0 3px 0 var(--black),
+		2.12px -2.12px 0 var(--black),
+		2.12px 2.12px 0 var(--black),
+		3px 0 0 var(--black),
+		-6px 0 0 var(--red),
+		-5.2px -3px 0 var(--red),
+		-5.2px 3px 0 var(--red),
+		-3px -5.2px 0 var(--red),
+		-3px 5.2px 0 var(--red),
+		0 -6px 0 var(--red),
+		0 6px 0 var(--red),
+		3px -5.2px 0 var(--red),
+		3px 5.2px 0 var(--red),
+		5.2px -3px 0 var(--red),
+		5.2px 3px 0 var(--red),
+		6px 0 0 var(--red);
 }
 
 @media (orientation: portrait) {
@@ -538,15 +587,6 @@ td { display: table-cell; }
 }
 
 .result-label {
-	filter:
-		drop-shadow(-3px 0 0 var(--black))
-		drop-shadow(3px 0 0 var(--black))
-		drop-shadow(0 -3px 0 var(--black))
-		drop-shadow(0 3px 0 var(--black))
-		drop-shadow(-3px 0 0 var(--red))
-		drop-shadow(3px 0 0 var(--red))
-		drop-shadow(0 -3px 0 var(--red))
-		drop-shadow(0 3px 0 var(--red));
 	margin-inline-end: 1em;
 }
 
@@ -556,16 +596,7 @@ td { display: table-cell; }
 
 .result-value {
 	display: block;
-	filter:
-		drop-shadow(-3px 0 0 var(--black))
-		drop-shadow(3px 0 0 var(--black))
-		drop-shadow(0 -3px 0 var(--black))
-		drop-shadow(0 3px 0 var(--black))
-		drop-shadow(-3px 0 0 var(--red))
-		drop-shadow(3px 0 0 var(--red))
-		drop-shadow(0 -3px 0 var(--red))
-		drop-shadow(0 3px 0 var(--red))
-		drop-shadow(0 0 10px var(--white));
+	filter: drop-shadow(0 0 10px var(--white));
 	text-align: center;
 	writing-mode: horizontal-tb;
 }
