@@ -42,14 +42,13 @@ type State =
   , options :: Set Option
   }
 
-data Mode = RouteMode | CostMode
+data Mode = RouteMode | CostMode | SelectionMode
 
 data Action
   = HandleInput Input
   | SelectMode Mode
   | SelectSkill Skill
   | ToggleHealth SkillCategory
-  | ToggleParalysis Skill
   | ToggleBarrier SkillCategoryGap
 
 type Query = Const Void
@@ -73,8 +72,9 @@ type ComponentHTML = H.ComponentHTML Action ChildSlots MonadType
 derive instance eqMode :: Eq Mode
 
 instance showMode :: Show Mode where
-  show RouteMode = "route"
-  show CostMode = "cost"
+  show RouteMode = "route-mode"
+  show CostMode = "cost-mode"
+  show SelectionMode = "selection-mode"
 
 _table :: SProxy "table"
 _table = SProxy
@@ -106,7 +106,7 @@ render :: State -> ComponentHTML
 render { mode, selection, health, paralysis, barriers, skills, gaps, options } =
   HH.section
     [ HP.id_ "view"
-    , HP.class_ $ H.ClassName $ show mode <> "-mode"
+    , HP.class_ $ H.ClassName $ show mode
     ]
     [ HH.h1 [ HP.class_ $ H.ClassName "heading" ] [ HH.text "判定" ]
     , HH.slot _table unit Table.component tableInput handleMessage
@@ -135,6 +135,14 @@ render { mode, selection, health, paralysis, barriers, skills, gaps, options } =
             , HP.attr (H.AttrName "data-index") $ show 2
             ]
             [ HH.text $ display skill ]
+      , HH.span
+        [ HP.classes $ H.ClassName <$> ["option", "paralysis"] <> if foldl (||) false paralysis then ["checked"] else []
+        , HP.attr (H.AttrName "data-index") $ show 3
+        , HE.onClick \_ -> Just $ SelectMode case mode of
+          SelectionMode -> RouteMode
+          _ -> SelectionMode
+        ]
+        [ HH.text "マヒ" ]
       ]
     ]
   where
@@ -211,7 +219,7 @@ render { mode, selection, health, paralysis, barriers, skills, gaps, options } =
                   let skill = Skill (rightCategory gap) (getIndex y)
                   in modify_ $ MT.modify skill (_ `snoc` "route")
                 Nothing -> pure unit
-      CostMode ->
+      _ ->
         MC.toSkillTable gapHeaderClasses
       where
         onRoute :: SkillCategory -> SkillCategory -> Maybe SkillCategoryGap
@@ -224,7 +232,6 @@ handleMessage :: Table.Message -> Maybe Action
 handleMessage (Table.CategoryClicked category) = Just $ ToggleHealth category
 handleMessage (Table.SkillClicked skill) = Just $ SelectSkill skill
 handleMessage (Table.GapClicked gap) = Just $ ToggleBarrier gap
-handleMessage (Table.SkillHeld skill) = Just $ ToggleParalysis skill
 
 handleAction :: Action -> H.HalogenM State Action ChildSlots Message MonadType Unit
 handleAction = case _ of
@@ -233,11 +240,14 @@ handleAction = case _ of
   SelectMode mode -> do
     H.modify_ \s -> s { mode = mode }
   SelectSkill skill -> do
-    H.modify_ \s -> s { selection = if Just skill == s.selection then Nothing else Just skill }
+    H.modify_ \s -> case s.mode of
+      SelectionMode -> s
+        { mode = RouteMode
+        , paralysis = MT.modify skill not s.paralysis
+        }
+      _ -> s { selection = if Just skill == s.selection then Nothing else Just skill }
   ToggleHealth category -> do
     H.modify_ \s -> s { health = MC.modify category not s.health }
-  ToggleParalysis skill -> do
-    H.modify_ \s -> s { paralysis = MT.modify skill not s.paralysis }
   ToggleBarrier gap -> do
     { gaps } <- H.get
     if not $ MC.lookup gap gaps
