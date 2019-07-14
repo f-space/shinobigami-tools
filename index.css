@@ -1,4 +1,4 @@
-* {
+*, *::before, *::after {
 	all: unset;
 	-webkit-tap-highlight-color: transparent;
 	-webkit-text-fill-color: currentColor;
@@ -175,18 +175,30 @@ td { display: table-cell; }
 .start {
 	animation: flicker 1s ease-in-out infinite alternate;
 	color: var(--white);
-	filter:
-		drop-shadow(-3px 0 0 var(--black))
-		drop-shadow(3px 0 0 var(--black))
-		drop-shadow(0 -3px 0 var(--black))
-		drop-shadow(0 3px 0 var(--black))
-		drop-shadow(-3px 0 0 var(--red))
-		drop-shadow(3px 0 0 var(--red))
-		drop-shadow(0 -3px 0 var(--red))
-		drop-shadow(0 3px 0 var(--red))
-		drop-shadow(0 0 10px var(--white));
+	filter: drop-shadow(0 0 10px var(--white));
 	font-size: 8rem;
 	font-weight: bold;
+	text-shadow:
+		-4px 0 0 var(--black),
+		-2.83px -2.83px 0 var(--black),
+		-2.83px 2.83px 0 var(--black),
+		0 -4px 0 var(--black),
+		0 4px 0 var(--black),
+		2.83px -2.83px 0 var(--black),
+		2.83px 2.83px 0 var(--black),
+		4px 0 0 var(--black),
+		-8px 0 0 var(--red),
+		-6.93px -4px 0 var(--red),
+		-6.93px 4px 0 var(--red),
+		-4px -6.93px 0 var(--red),
+		-4px 6.93px 0 var(--red),
+		0 -8px 0 var(--red),
+		0 8px 0 var(--red),
+		4px -6.93px 0 var(--red),
+		4px 6.93px 0 var(--red),
+		6.93px -4px 0 var(--red),
+		6.93px 4px 0 var(--red),
+		8px 0 0 var(--red);
 }
 
 .heading {
@@ -255,7 +267,6 @@ td { display: table-cell; }
 
 .table-category {
 	background-color: var(--black);
-	box-shadow: inset -1px -1px 2px 0 var(--gray);
 	color: var(--white);
 }
 
@@ -289,11 +300,9 @@ td { display: table-cell; }
 }
 
 .table-skill::before {
-	align-items: center;
 	color: rgb(127, 31, 31);
-	display: grid;
 	font-weight: bold;
-	justify-items: center;
+	padding: inherit;
 	text-shadow: none;
 }
 
@@ -487,37 +496,53 @@ td { display: table-cell; }
 .clear {
 	align-self: flex-end;
 	color: var(--white);
-	filter:
-		drop-shadow(-3px 0 0 var(--black))
-		drop-shadow(3px 0 0 var(--black))
-		drop-shadow(0 -3px 0 var(--black))
-		drop-shadow(0 3px 0 var(--black))
-		drop-shadow(0 0 5px var(--white));
+	filter: drop-shadow(0 0 5px var(--white));
 	font-size: 3rem;
 	font-weight: bold;
 	grid-area: clear;
 	line-height: 1;
 	margin-block-end: 3rem;
+	text-shadow:
+		-3px 0 0 var(--black),
+		-2.12px -2.12px 0 var(--black),
+		-2.12px 2.12px 0 var(--black),
+		0 -3px 0 var(--black),
+		0 3px 0 var(--black),
+		2.12px -2.12px 0 var(--black),
+		2.12px 2.12px 0 var(--black),
+		3px 0 0 var(--black);
 }
 
 .complete {
 	align-self: flex-end;
 	color: var(--white);
-	filter:
-		drop-shadow(-3px 0 0 var(--black))
-		drop-shadow(3px 0 0 var(--black))
-		drop-shadow(0 -3px 0 var(--black))
-		drop-shadow(0 3px 0 var(--black))
-		drop-shadow(-3px 0 0 var(--red))
-		drop-shadow(3px 0 0 var(--red))
-		drop-shadow(0 -3px 0 var(--red))
-		drop-shadow(0 3px 0 var(--red))
-		drop-shadow(0 0 10px var(--white));
+	filter: drop-shadow(0 0 10px var(--white));
 	font-size: 4rem;
 	font-weight: bold;
 	grid-area: complete;
 	line-height: 1;
 	margin-block-end: 3rem;
+	text-shadow:
+		-3px 0 0 var(--black),
+		-2.12px -2.12px 0 var(--black),
+		-2.12px 2.12px 0 var(--black),
+		0 -3px 0 var(--black),
+		0 3px 0 var(--black),
+		2.12px -2.12px 0 var(--black),
+		2.12px 2.12px 0 var(--black),
+		3px 0 0 var(--black),
+		-6px 0 0 var(--red),
+		-5.2px -3px 0 var(--red),
+		-5.2px 3px 0 var(--red),
+		-3px -5.2px 0 var(--red),
+		-3px 5.2px 0 var(--red),
+		0 -6px 0 var(--red),
+		0 6px 0 var(--red),
+		3px -5.2px 0 var(--red),
+		3px 5.2px 0 var(--red),
+		5.2px -3px 0 var(--red),
+		5.2px 3px 0 var(--red),
+		6px 0 0 var(--red);
 }
 
 .result {
@@ -528,6 +553,27 @@ td { display: table-cell; }
 	font-weight: bold;
 	grid-area: result;
 	justify-content: center;
+	text-shadow:
+		-3px 0 0 var(--black),
+		-2.12px -2.12px 0 var(--black),
+		-2.12px 2.12px 0 var(--black),
+		0 -3px 0 var(--black),
+		0 3px 0 var(--black),
+		2.12px -2.12px 0 var(--black),
+		2.12px 2.12px 0 var(--black),
+		3px 0 0 var(--black),
+		-6px 0 0 var(--red),
+		-5.2px -3px 0 var(--red),
+		-5.2px 3px 0 var(--red),
+		-3px -5.2px 0 var(--red),
+		-3px 5.2px 0 var(--red),
+		0 -6px 0 var(--red),
+		0 6px 0 var(--red),
+		3px -5.2px 0 var(--red),
+		3px 5.2px 0 var(--red),
+		5.2px -3px 0 var(--red),
+		5.2px 3px 0 var(--red),
+		6px 0 0 var(--red);
 }
 
 @media (orientation: portrait) {
@@ -539,15 +585,6 @@ td { display: table-cell; }
 }
 
 .result-label {
-	filter:
-		drop-shadow(-3px 0 0 var(--black))
-		drop-shadow(3px 0 0 var(--black))
-		drop-shadow(0 -3px 0 var(--black))
-		drop-shadow(0 3px 0 var(--black))
-		drop-shadow(-3px 0 0 var(--red))
-		drop-shadow(3px 0 0 var(--red))
-		drop-shadow(0 -3px 0 var(--red))
-		drop-shadow(0 3px 0 var(--red));
 	margin-inline-end: 1em;
 }
 
@@ -557,16 +594,7 @@ td { display: table-cell; }
 
 .result-value {
 	display: block;
-	filter:
-		drop-shadow(-3px 0 0 var(--black))
-		drop-shadow(3px 0 0 var(--black))
-		drop-shadow(0 -3px 0 var(--black))
-		drop-shadow(0 3px 0 var(--black))
-		drop-shadow(-3px 0 0 var(--red))
-		drop-shadow(3px 0 0 var(--red))
-		drop-shadow(0 -3px 0 var(--red))
-		drop-shadow(0 3px 0 var(--red))
-		drop-shadow(0 0 10px var(--white));
+	filter: drop-shadow(0 0 10px var(--white));
 	text-align: center;
 	writing-mode: horizontal-tb;
 }
@@ -638,3 +666,21 @@ td { display: table-cell; }
 @media (max-aspect-ratio: 6/16), (min-aspect-ratio: 16/6) { :root { --font-scale: .6; } }
 @media (max-aspect-ratio: 5/16), (min-aspect-ratio: 16/5) { :root { --font-scale: .5; } }
 @media (max-aspect-ratio: 4/16), (min-aspect-ratio: 16/4) { :root { --font-scale: .4; } }
+
+/* workaround for Safari */
+#back { border-bottom: 1px solid var(--red); }
+#back::before { border-bottom: .5em solid var(--red); }
+.option {
+	border-block-end: 1px solid;
+	border-block-start: 1px solid;
+	border-inline-end: .5em double;
+	border-inline-start: .5em double;
+	border-color: var(--option-color);
+}
+.suboption {
+	border-block-end: 1px solid;
+	border-block-start: 1px solid;
+	border-inline-end: .25em solid;
+	border-inline-start: .25em solid;
+	border-color: var(--option-color);
+}
