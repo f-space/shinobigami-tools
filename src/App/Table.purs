@@ -8,14 +8,12 @@ module App.Table
 
 import Prelude
 
-import App.Gesture as Gesture
 import App.Model (Skill(..), SkillCategory, SkillCategoryGap, SkillColumn, SkillIndex, SkillTable, categories, display, indices, leftGap)
 import App.Model.Column as MC
 import App.Model.Table as MT
 import Data.Array (concatMap, cons)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..))
-import Data.Symbol (SProxy(..))
 import Effect.Aff (Aff)
 import Halogen as H
 import Halogen.HTML as HH
@@ -29,7 +27,6 @@ data Action
   | ClickCategory SkillCategory
   | ClickSkill Skill
   | ClickGap SkillCategoryGap
-  | HoldSkill Skill
 
 type Query = Const Void
 
@@ -44,14 +41,10 @@ data Message
   = CategoryClicked SkillCategory
   | SkillClicked Skill
   | GapClicked SkillCategoryGap
-  | SkillHeld Skill
 
 type Slot slot = H.Slot Query Message slot
 
-type ChildSlots = ( cell :: Gesture.Slot Skill )
-
-_cell :: SProxy "cell"
-_cell = SProxy
+type ChildSlots = ()
 
 type MonadType = Aff
 
@@ -123,17 +116,11 @@ render { categoryClasses, skillClasses, gapHeaderClasses, gapClasses } =
     renderSkillCell :: SkillIndex -> SkillCategory -> ComponentHTML
     renderSkillCell index category = 
       let skill = Skill category index
-      in HH.slot _cell skill Gesture.component (cellInput skill) $ handleCellMessage skill
-
-    cellInput :: Skill -> Gesture.Input
-    cellInput skill = Gesture.Renderer \props ->
-      HH.td
-        ([ HP.classes $ H.ClassName <$> (cons "table-skill" $ MT.lookup skill skillClasses) ] <> props)
+      in HH.td
+        [ HP.classes $ H.ClassName <$> (cons "table-skill" $ MT.lookup skill skillClasses)
+        , HE.onClick \_ -> Just $ ClickSkill skill
+        ]
         [ HH.text $ display skill ]
-
-handleCellMessage :: Skill -> Gesture.Message -> Maybe Action
-handleCellMessage skill (Gesture.Tapped) = Just $ ClickSkill skill
-handleCellMessage skill (Gesture.LongTapped) = Just $ HoldSkill skill
 
 handleAction :: Action -> H.HalogenM State Action ChildSlots Message MonadType Unit
 handleAction = case _ of
@@ -145,5 +132,3 @@ handleAction = case _ of
     H.raise $ SkillClicked skill
   ClickGap gap -> do
     H.raise $ GapClicked gap
-  HoldSkill skill -> do
-    H.raise $ SkillHeld skill

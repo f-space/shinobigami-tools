@@ -141,7 +141,6 @@ handleMessage :: Table.Message -> Maybe Action
 handleMessage (Table.CategoryClicked category) = Just $ ToggleCategory category
 handleMessage (Table.SkillClicked skill) = Just $ ToggleSkill skill
 handleMessage (Table.GapClicked gap) = Just $ ToggleGap gap
-handleMessage _ = Nothing
 
 handleSelectionMessage :: Table.Message -> Maybe Action
 handleSelectionMessage (Table.SkillClicked skill) = Just $ SelectYoriSkill skill

@@ -1,6 +1,7 @@
 * {
 	all: unset;
 	-webkit-tap-highlight-color: transparent;
+	-webkit-text-fill-color: currentColor;
 	-webkit-touch-callout: none;
 }
 
@@ -284,7 +285,7 @@ td { display: table-cell; }
 
 .table-skill {
 	background-color: var(--white);
-	color: var(--skill-color, var(--black));
+	color: var(--black);
 }
 
 .table-skill::before {
@@ -308,21 +309,16 @@ td { display: table-cell; }
 	background-image: repeating-linear-gradient(-45deg, var(--black), transparent 1.5px, transparent 5px);
 }
 
-.table-skill.paralyzed {
-	color: var(--white);
-	text-shadow:
-		-1px -1px 0 var(--skill-color, var(--gray)),
-		-1px 1px 0 var(--skill-color, var(--gray)),
-		1px -1px 0 var(--skill-color, var(--gray)),
-		1px 1px 0 var(--skill-color, var(--gray));
+.table-skill.paralyzed, .table-skill.acquired.paralyzed {
+	color: rgb(223, 191, 31);
 }
 
 .table-skill.acquired {
-	--skill-color: var(--red);
+	color: var(--red);
 }
 
-.table-skill.selected {
-	--skill-color: var(--blue);
+.table-skill.selected, .table-skill.selected.paralyzed {
+	color: var(--blue);
 }
 
 .table-skill.selected::before {
@@ -363,7 +359,6 @@ td { display: table-cell; }
 .table-skill.cost-25::before { content: "30"; }
 
 .cost-mode .table-skill { background-color: var(--cost-mode-color, hsl(0, 0%, 0%)); }
-.cost-mode .table-skill.paralyzed { color: var(--cost-mode-color); }
 .cost-mode .table-skill.cost-0 { --cost-mode-color: hsl(15, 50%, 100%);}
 .cost-mode .table-skill.cost-1 { --cost-mode-color: hsl(15, 50%, 87.5%); }
 .cost-mode .table-skill.cost-2 { --cost-mode-color: hsl(15, 50%, 75%); }
@@ -412,26 +407,34 @@ td { display: table-cell; }
 }
 
 .options {
+	--option-color: var(--red);
+	
 	display: grid;
 	column-gap: 1.5rem;
 	grid-area: options;
-	grid-template:
-		"a  b  c " 4fr
-		"a_ b_ c_" 3fr
-		/ 1fr 1fr 1fr;
+	grid-template: 4fr 3fr / repeat(var(--option-size), 1fr);
 	margin-block-end: 1rem;
 	margin-block-start: 1rem;
 	row-gap: 1rem;
 }
 
+#edit .options { --option-size: 3; }
+#view .options { --option-size: 4; }
+
+.option[data-index="0"], .suboption[data-index="0"] { grid-column: 1; }
+.option[data-index="1"], .suboption[data-index="1"] { grid-column: 2; }
+.option[data-index="2"], .suboption[data-index="2"] { grid-column: 3; }
+.option[data-index="3"], .suboption[data-index="3"] { grid-column: 4; }
+
 .option {
-	border-block-end: 1px solid var(--red);
-	border-block-start: 1px solid var(--red);
-	border-inline-end: .5em double var(--red);
-	border-inline-start: .5em double var(--red);
+	border-block-end: 1px solid var(--option-color);
+	border-block-start: 1px solid var(--option-color);
+	border-inline-end: .5em double var(--option-color);
+	border-inline-start: .5em double var(--option-color);
 	color: var(--white);
 	font-size: calc(2.5rem * var(--font-scale, 1));
 	font-weight: bold;
+	grid-row: 1;
 	line-height: 1;
 	opacity: 0.5;
 	padding-block-end: .25em;
@@ -442,31 +445,36 @@ td { display: table-cell; }
 }
 
 .option.checked {
-	box-shadow: 0 0 10px 3px var(--red);
+	box-shadow: 0 0 10px 3px var(--option-color);
 	opacity: 1;
 }
 
-.selection-mode .option[data-index="2"] {
+.option.paralysis {
+	--option-color: rgb(223, 223, 31);
+}
+
+#edit.selection-mode .option[data-index="2"] {
 	animation: flicker 1s ease-in-out infinite alternate;
 }
 
-.option[data-index="0"] { grid-area: a; }
-.option[data-index="1"] { grid-area: b; }
-.option[data-index="2"] { grid-area: c; }
-
-#view .option:not(.checked) {
+#view .option:not(.checked):not(.paralysis) {
 	filter: grayscale();
+}
+
+#view.selection-mode .option.paralysis {
+	animation: flicker 1s ease-in-out infinite alternate;
 }
 
 .suboption {
 	align-self: flex-start;
-	border-block-end: 1px solid var(--red);
-	border-block-start: 1px solid var(--red);
-	border-inline-end: .25em solid var(--red);
-	border-inline-start: .25em solid var(--red);
+	border-block-end: 1px solid var(--option-color);
+	border-block-start: 1px solid var(--option-color);
+	border-inline-end: .25em solid var(--option-color);
+	border-inline-start: .25em solid var(--option-color);
 	color: var(--white);
 	font-size: calc(1.5rem * var(--font-scale, 1));
 	font-weight: bold;
+	grid-row: 2;
 	justify-self: center;
 	line-height: 1;
 	padding-block-end: .25em;
@@ -475,10 +483,6 @@ td { display: table-cell; }
 	padding-inline-start: .5em;
 	text-align: center;
 }
-
-.suboption[data-index="0"] { grid-area: a_; }
-.suboption[data-index="1"] { grid-area: b_; }
-.suboption[data-index="2"] { grid-area: c_; }
 
 .clear {
 	align-self: flex-end;
