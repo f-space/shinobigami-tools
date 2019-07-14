@@ -255,7 +255,6 @@ td { display: table-cell; }
 
 .table-category {
 	background-color: var(--black);
-	box-shadow: inset -1px -1px 2px 0 var(--gray);
 	color: var(--white);
 }
 
