@@ -300,11 +300,9 @@ td { display: table-cell; }
 }
 
 .table-skill::before {
-	align-items: center;
 	color: rgb(127, 31, 31);
-	display: grid;
 	font-weight: bold;
-	justify-items: center;
+	padding: inherit;
 	text-shadow: none;
 }
 
