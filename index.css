@@ -1,4 +1,4 @@
-* {
+*, *::before, *::after {
 	all: unset;
 	-webkit-tap-highlight-color: transparent;
 	-webkit-text-fill-color: currentColor;
