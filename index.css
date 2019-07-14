@@ -666,3 +666,21 @@ td { display: table-cell; }
 @media (max-aspect-ratio: 6/16), (min-aspect-ratio: 16/6) { :root { --font-scale: .6; } }
 @media (max-aspect-ratio: 5/16), (min-aspect-ratio: 16/5) { :root { --font-scale: .5; } }
 @media (max-aspect-ratio: 4/16), (min-aspect-ratio: 16/4) { :root { --font-scale: .4; } }
+
+/* workaround for Safari */
+#back { border-bottom: 1px solid var(--red); }
+#back::before { border-bottom: .5em solid var(--red); }
+.option {
+	border-block-end: 1px solid;
+	border-block-start: 1px solid;
+	border-inline-end: .5em double;
+	border-inline-start: .5em double;
+	border-color: var(--option-color);
+}
+.suboption {
+	border-block-end: 1px solid;
+	border-block-start: 1px solid;
+	border-inline-end: .25em solid;
+	border-inline-start: .25em solid;
+	border-color: var(--option-color);
+}
