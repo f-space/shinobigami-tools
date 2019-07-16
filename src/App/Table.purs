@@ -58,7 +58,8 @@ data Action
   | TouchMove TE.TouchEvent
   | TouchCancel TE.TouchEvent
   | Hover Int Int Pointer
-  | Select Int Int
+  | Select Int Int Pointer
+  | Cancel Pointer
   | SetPointerCell Pointer Cell
   | SelectCategory SkillCategory
   | SelectSkill Skill
@@ -213,18 +214,18 @@ handleAction = case _ of
     handleAction $ Hover (ME.pageX event) (ME.pageY event) Mouse
   MouseUp event -> do
     H.liftEffect $ preventDefault $ ME.toEvent event
-    handleAction $ Select (ME.pageX event) (ME.pageY event)
+    handleAction $ Select (ME.pageX event) (ME.pageY event) Mouse
   MouseMove event -> do
     H.liftEffect $ preventDefault $ ME.toEvent event
     handleAction $ Hover (ME.pageX event) (ME.pageY event) Mouse
   TouchStart event -> do
     H.liftEffect $ preventDefault $ TE.toEvent event
     foreachTouch event \touch ->
-      handleAction $ Hover (TET.pageX touch) (TET.pageY touch) $ Touch (TET.identifier touch)
+      handleAction $ Hover (TET.pageX touch) (TET.pageY touch) (Touch $ TET.identifier touch)
   TouchEnd event -> do
     H.liftEffect $ preventDefault $ TE.toEvent event
     foreachTouch event \touch ->
-      handleAction $ Select (TET.pageX touch) (TET.pageY touch)
+      handleAction $ Select (TET.pageX touch) (TET.pageY touch) (Touch $ TET.identifier touch)
   TouchMove event -> do
     H.liftEffect $ preventDefault $ TE.toEvent event
     foreachTouch event \touch ->
@@ -232,7 +233,7 @@ handleAction = case _ of
   TouchCancel event -> do
     H.liftEffect $ preventDefault $ TE.toEvent event
     foreachTouch event \touch ->
-      H.modify_ \s -> s { pointers = delete (Touch $ TET.identifier touch) s.pointers }
+      handleAction $ Cancel (Touch $ TET.identifier touch)
   Hover x y pointer -> do
     result <- getPointedElement x y
     case result of
@@ -242,11 +243,14 @@ handleAction = case _ of
           in void $ dispatchEvent (toEvent event) (toEventTarget element)
       Nothing ->
         H.modify_ \s -> s { pointers = delete pointer s.pointers }
-  Select x y -> do
+  Select x y pointer -> do
     getPointedElement x y >>= traverse_ \element ->
       H.liftEffect $
         let event = newCustomEvent selectEventType defaultEventInit
         in void $ dispatchEvent (toEvent event) (toEventTarget element)
+    H.modify_ \s -> s { pointers = delete pointer s.pointers }
+  Cancel pointer -> do
+    H.modify_ \s -> s { pointers = delete pointer s.pointers }
   SetPointerCell pointer cell ->
     H.modify_ \s -> s { pointers = insert pointer cell s.pointers }
   SelectCategory category -> do
