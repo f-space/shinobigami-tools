@@ -11,19 +11,55 @@ import Prelude
 import App.Model (Skill(..), SkillCategory, SkillCategoryGap, SkillColumn, SkillIndex, SkillTable, categories, display, indices, leftGap)
 import App.Model.Column as MC
 import App.Model.Table as MT
-import Data.Array (concatMap, cons)
+import Data.Array (concatMap, cons, elem, fromFoldable, (..))
 import Data.Const (Const)
+import Data.Foldable (for_, traverse_)
+import Data.Map (Map, delete, empty, insert, values)
 import Data.Maybe (Maybe(..))
+import Data.Traversable (traverse)
 import Effect.Aff (Aff)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
+import TableFFI (defaultEventInit, detail, elementFromPoint, newCustomEvent, toEvent, unsafeFromEvent)
+import Web.DOM.Element (Element, tagName, toEventTarget, toNode)
+import Web.DOM.Node (contains)
+import Web.Event.Event (Event, EventType(..), preventDefault)
+import Web.Event.EventTarget (dispatchEvent)
+import Web.HTML (window)
+import Web.HTML.HTMLDocument (toDocument)
+import Web.HTML.HTMLElement (toElement)
+import Web.HTML.Window (document)
+import Web.TouchEvent.Touch as TET
+import Web.TouchEvent.TouchEvent as TE
+import Web.TouchEvent.TouchList as TEL
+import Web.UIEvent.MouseEvent as ME
 
-type State = Input
+data Pointer = Mouse | Touch Int
+
+data Cell
+  = CategoryCell SkillCategory
+  | SkillCell Skill
+  | GapCell SkillCategoryGap
+
+type State =
+  { input :: Input
+  , pointers :: Map Pointer Cell
+  }
 
 data Action
   = HandleInput Input
+  | MouseDown ME.MouseEvent
+  | MouseUp ME.MouseEvent
+  | MouseMove ME.MouseEvent
+  | TouchStart TE.TouchEvent
+  | TouchEnd TE.TouchEvent
+  | TouchMove TE.TouchEvent
+  | TouchCancel TE.TouchEvent
+  | Hover Int Int Pointer
+  | Select Int Int
+  | SetPointerCell Pointer Cell
   | ClickCategory SkillCategory
   | ClickSkill Skill
   | ClickGap SkillCategoryGap
@@ -50,6 +86,17 @@ type MonadType = Aff
 
 type ComponentHTML = H.ComponentHTML Action ChildSlots MonadType
 
+derive instance eqPointer :: Eq Pointer
+derive instance ordPointer :: Ord Pointer
+
+derive instance eqCell :: Eq Cell
+
+hoverEventType :: String
+hoverEventType = "hover-table-item"
+
+selectEventType :: String
+selectEventType = "select-table-item"
+
 component :: H.Component HH.HTML Query Input Message MonadType
 component =
   H.mkComponent
@@ -62,17 +109,29 @@ component =
     }
 
 initialState :: Input -> State
-initialState = identity
+initialState = { input: _, pointers: empty }
 
 render :: State -> ComponentHTML
-render { categoryClasses, skillClasses, gapHeaderClasses, gapClasses } =
+render { input: { categoryClasses, skillClasses, gapHeaderClasses, gapClasses }, pointers } =
   HH.table
-    [ HP.class_ $ H.ClassName "table" ]
+    [ HP.class_ $ H.ClassName "table"
+    , HP.ref (H.RefLabel "table")
+    , HE.onMouseDown (Just <<< MouseDown)
+    , HE.onMouseUp (Just <<< MouseUp)
+    , HE.onMouseMove (Just <<< MouseMove)
+    , HE.onTouchStart (Just <<< TouchStart)
+    , HE.onTouchEnd (Just <<< TouchEnd)
+    , HE.onTouchMove (Just <<< TouchMove)
+    , HE.onTouchCancel (Just <<< TouchCancel)
+    ]
     [ HH.colgroup_ $ renderColumns categories
     , HH.thead_ [HH.tr_ $ renderHeaderRow categories]
     , HH.tbody_ $ HH.tr_ <<< flip renderRow categories <$> indices
     ]
   where
+    hoverTargets :: Array Cell
+    hoverTargets = fromFoldable $ values pointers
+  
     renderColumns :: Array SkillCategory -> Array ComponentHTML
     renderColumns = concatMap \c -> [ renderGapColumn, renderSkillColumn ]
   
@@ -87,17 +146,25 @@ render { categoryClasses, skillClasses, gapHeaderClasses, gapClasses } =
 
     renderGapHeader :: SkillCategoryGap -> ComponentHTML
     renderGapHeader gap =
-      HH.th
-        [ HP.classes $ H.ClassName <$> (cons "table-gap-header" $ MC.lookup gap gapHeaderClasses)
-        , HE.onClick \_ -> Just $ ClickGap gap
+      let
+        baseClasses = cons "table-gap-header" $ MC.lookup gap gapHeaderClasses
+        hoverClass = if GapCell gap `elem` hoverTargets then ["hover"] else []
+      in HH.th
+        [ HP.classes $ H.ClassName <$> baseClasses <> hoverClass
+        , onHoverTableItem \e -> Just $ SetPointerCell (detail $ unsafeFromEvent e) $ GapCell gap
+        , onSelectTableItem \_ -> Just $ ClickGap gap
         ]
         []
     
     renderSkillHeader :: SkillCategory -> ComponentHTML
     renderSkillHeader category =
-      HH.th
-        [ HP.classes $ H.ClassName <$> (cons "table-category" $ MC.lookup category categoryClasses)
-        , HE.onClick \_ -> Just $ ClickCategory category
+      let
+        baseClasses = cons "table-category" $ MC.lookup category categoryClasses
+        hoverClass = if CategoryCell category `elem` hoverTargets then ["hover"] else []
+      in HH.th
+        [ HP.classes $ H.ClassName <$> baseClasses <> hoverClass
+        , onHoverTableItem \e -> Just $ SetPointerCell (detail $ unsafeFromEvent e) $ CategoryCell category
+        , onSelectTableItem \_ -> Just $ ClickCategory category
         ]
         [ HH.text $ display category ]
 
@@ -106,29 +173,104 @@ render { categoryClasses, skillClasses, gapHeaderClasses, gapClasses } =
 
     renderGapCell :: SkillIndex -> SkillCategory -> ComponentHTML
     renderGapCell index category =
-      let skill = Skill category index
+      let
+        skill = Skill category index
+        gap = leftGap category
+        baseClasses = cons "table-gap" $ MT.lookup skill gapClasses
+        hoverClass = if GapCell gap `elem` hoverTargets then ["hover"] else []
       in HH.td
-        [ HP.classes $ H.ClassName <$> (cons "table-gap" $ MT.lookup skill gapClasses)
-        , HE.onClick \_ -> Just $ ClickGap $ leftGap category
+        [ HP.classes $ H.ClassName <$> baseClasses <> hoverClass
+        , onHoverTableItem \e -> Just $ SetPointerCell (detail $ unsafeFromEvent e) $ GapCell gap
+        , onSelectTableItem \_ -> Just $ ClickGap gap
         ]
         []
 
     renderSkillCell :: SkillIndex -> SkillCategory -> ComponentHTML
     renderSkillCell index category = 
-      let skill = Skill category index
+      let
+        skill = Skill category index
+        baseClasses = cons "table-skill" $ MT.lookup skill skillClasses
+        hoverClass = if SkillCell skill `elem` hoverTargets then ["hover"] else []
       in HH.td
-        [ HP.classes $ H.ClassName <$> (cons "table-skill" $ MT.lookup skill skillClasses)
-        , HE.onClick \_ -> Just $ ClickSkill skill
+        [ HP.classes $ H.ClassName <$> baseClasses <> hoverClass
+        , onHoverTableItem \e -> Just $ SetPointerCell (detail $ unsafeFromEvent e) $ SkillCell skill
+        , onSelectTableItem \_ -> Just $ ClickSkill skill
         ]
         [ HH.text $ display skill ]
+
+    onHoverTableItem :: forall r i. (Event -> Maybe i) -> HP.IProp r i
+    onHoverTableItem = HE.handler (EventType hoverEventType)
+    
+    onSelectTableItem :: forall r i. (Event -> Maybe i) -> HP.IProp r i
+    onSelectTableItem = HE.handler (EventType selectEventType)
 
 handleAction :: Action -> H.HalogenM State Action ChildSlots Message MonadType Unit
 handleAction = case _ of
   HandleInput input -> do
-    H.put input
+    H.modify_ \s -> s { input = input }
+  MouseDown event -> do
+    H.liftEffect $ preventDefault $ ME.toEvent event
+    handleAction $ Hover (ME.pageX event) (ME.pageY event) Mouse
+  MouseUp event -> do
+    H.liftEffect $ preventDefault $ ME.toEvent event
+    handleAction $ Select (ME.pageX event) (ME.pageY event)
+  MouseMove event -> do
+    H.liftEffect $ preventDefault $ ME.toEvent event
+    handleAction $ Hover (ME.pageX event) (ME.pageY event) Mouse
+  TouchStart event -> do
+    H.liftEffect $ preventDefault $ TE.toEvent event
+    foreachTouch event \touch ->
+      handleAction $ Hover (TET.pageX touch) (TET.pageY touch) $ Touch (TET.identifier touch)
+  TouchEnd event -> do
+    H.liftEffect $ preventDefault $ TE.toEvent event
+    foreachTouch event \touch ->
+      handleAction $ Select (TET.pageX touch) (TET.pageY touch)
+  TouchMove event -> do
+    H.liftEffect $ preventDefault $ TE.toEvent event
+    foreachTouch event \touch ->
+      handleAction $ Hover (TET.pageX touch) (TET.pageY touch) (Touch $ TET.identifier touch)
+  TouchCancel event -> do
+    H.liftEffect $ preventDefault $ TE.toEvent event
+    foreachTouch event \touch ->
+      H.modify_ \s -> s { pointers = delete (Touch $ TET.identifier touch) s.pointers }
+  Hover x y pointer -> do
+    result <- getPointedElement x y
+    case result of
+      Just element ->
+        H.liftEffect $
+          let event = newCustomEvent hoverEventType $ defaultEventInit { detail = pointer }
+          in void $ dispatchEvent (toEvent event) (toEventTarget element)
+      Nothing ->
+        H.modify_ \s -> s { pointers = delete pointer s.pointers }
+  Select x y -> do
+    getPointedElement x y >>= traverse_ \element ->
+      H.liftEffect $
+        let event = newCustomEvent selectEventType defaultEventInit
+        in void $ dispatchEvent (toEvent event) (toEventTarget element)
+  SetPointerCell pointer cell ->
+    H.modify_ \s -> s { pointers = insert pointer cell s.pointers }
   ClickCategory category -> do
     H.raise $ CategoryClicked category
   ClickSkill skill -> do
     H.raise $ SkillClicked skill
   ClickGap gap -> do
     H.raise $ GapClicked gap
+
+foreachTouch :: forall m. Applicative m => TE.TouchEvent -> (TET.Touch -> m Unit) -> m Unit
+foreachTouch event f =
+  let
+    touches = TE.changedTouches event
+    length = TEL.length touches
+  in for_ (0 .. (length - 1)) \i -> traverse f $ TEL.item i touches
+
+getPointedElement :: forall state action slots msg. Int -> Int -> H.HalogenM state action slots msg MonadType (Maybe Element)
+getPointedElement x y =
+  H.getHTMLElementRef (H.RefLabel "table") >>= map join <<< traverse \table ->
+    H.liftEffect $ window
+      >>= document
+      >>= (elementFromPoint x y <<< toDocument)
+      >>= map join <<< traverse \element ->
+        let tag = tagName element
+        in if tag == "TD" || tag == "TH"
+          then (if _ then Just element else Nothing) <$> contains ((toNode <<< toElement) table) (toNode element)
+          else pure Nothing
