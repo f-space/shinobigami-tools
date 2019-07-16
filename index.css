@@ -412,7 +412,7 @@ td { display: table-cell; }
 .route-mode .table-gap.widen:not(.route),
 .cost-mode .table-gap.widen {
 	background-color: rgb(191, 127, 127);
-	box-shadow: inset 0 0 1px 3px var(--white);
+	box-shadow: inset 0 0 1px .25rem var(--white);
 }
 
 .route-mode .table-gap.widen:not(.route).hover,
@@ -567,6 +567,7 @@ td { display: table-cell; }
 }
 
 .result {
+	align-items: center;
 	color: var(--white);
 	display: flex;
 	flex-flow: row nowrap;
@@ -609,7 +610,7 @@ td { display: table-cell; }
 	display: grid;
 	grid-auto-flow: column;
 	margin-inline-end: 1em;
-	column-gap: .05em;
+	column-gap: .1em;
 }
 
 .result-label > span:last-child {
