@@ -709,3 +709,13 @@ td { display: table-cell; }
 	border-inline-start: .25em solid;
 	border-color: var(--option-color);
 }
+
+/* workaround for Chrome */
+@media (orientation: portrait) {
+	#edit::before {
+		content: "";
+		grid-area: complete;
+		visibility: hidden;
+		writing-mode: horizontal-tb;
+	}
+}
