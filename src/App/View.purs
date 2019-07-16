@@ -229,9 +229,9 @@ render { mode, selection, health, paralysis, barriers, skills, gaps, options } =
           | otherwise = Nothing
 
 handleMessage :: Table.Message -> Maybe Action
-handleMessage (Table.CategoryClicked category) = Just $ ToggleHealth category
-handleMessage (Table.SkillClicked skill) = Just $ SelectSkill skill
-handleMessage (Table.GapClicked gap) = Just $ ToggleBarrier gap
+handleMessage (Table.CategorySelected category) = Just $ ToggleHealth category
+handleMessage (Table.SkillSelected skill) = Just $ SelectSkill skill
+handleMessage (Table.GapSelected gap) = Just $ ToggleBarrier gap
 
 handleAction :: Action -> H.HalogenM State Action ChildSlots Message MonadType Unit
 handleAction = case _ of

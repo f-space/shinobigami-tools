@@ -60,9 +60,9 @@ data Action
   | Hover Int Int Pointer
   | Select Int Int
   | SetPointerCell Pointer Cell
-  | ClickCategory SkillCategory
-  | ClickSkill Skill
-  | ClickGap SkillCategoryGap
+  | SelectCategory SkillCategory
+  | SelectSkill Skill
+  | SelectGap SkillCategoryGap
 
 type Query = Const Void
 
@@ -74,9 +74,9 @@ type Input =
   }
 
 data Message
-  = CategoryClicked SkillCategory
-  | SkillClicked Skill
-  | GapClicked SkillCategoryGap
+  = CategorySelected SkillCategory
+  | SkillSelected Skill
+  | GapSelected SkillCategoryGap
 
 type Slot slot = H.Slot Query Message slot
 
@@ -152,7 +152,7 @@ render { input: { categoryClasses, skillClasses, gapHeaderClasses, gapClasses },
       in HH.th
         [ HP.classes $ H.ClassName <$> baseClasses <> hoverClass
         , onHoverTableItem \e -> Just $ SetPointerCell (detail $ unsafeFromEvent e) $ GapCell gap
-        , onSelectTableItem \_ -> Just $ ClickGap gap
+        , onSelectTableItem \_ -> Just $ SelectGap gap
         ]
         []
     
@@ -164,7 +164,7 @@ render { input: { categoryClasses, skillClasses, gapHeaderClasses, gapClasses },
       in HH.th
         [ HP.classes $ H.ClassName <$> baseClasses <> hoverClass
         , onHoverTableItem \e -> Just $ SetPointerCell (detail $ unsafeFromEvent e) $ CategoryCell category
-        , onSelectTableItem \_ -> Just $ ClickCategory category
+        , onSelectTableItem \_ -> Just $ SelectCategory category
         ]
         [ HH.text $ display category ]
 
@@ -181,7 +181,7 @@ render { input: { categoryClasses, skillClasses, gapHeaderClasses, gapClasses },
       in HH.td
         [ HP.classes $ H.ClassName <$> baseClasses <> hoverClass
         , onHoverTableItem \e -> Just $ SetPointerCell (detail $ unsafeFromEvent e) $ GapCell gap
-        , onSelectTableItem \_ -> Just $ ClickGap gap
+        , onSelectTableItem \_ -> Just $ SelectGap gap
         ]
         []
 
@@ -194,7 +194,7 @@ render { input: { categoryClasses, skillClasses, gapHeaderClasses, gapClasses },
       in HH.td
         [ HP.classes $ H.ClassName <$> baseClasses <> hoverClass
         , onHoverTableItem \e -> Just $ SetPointerCell (detail $ unsafeFromEvent e) $ SkillCell skill
-        , onSelectTableItem \_ -> Just $ ClickSkill skill
+        , onSelectTableItem \_ -> Just $ SelectSkill skill
         ]
         [ HH.text $ display skill ]
 
@@ -249,12 +249,12 @@ handleAction = case _ of
         in void $ dispatchEvent (toEvent event) (toEventTarget element)
   SetPointerCell pointer cell ->
     H.modify_ \s -> s { pointers = insert pointer cell s.pointers }
-  ClickCategory category -> do
-    H.raise $ CategoryClicked category
-  ClickSkill skill -> do
-    H.raise $ SkillClicked skill
-  ClickGap gap -> do
-    H.raise $ GapClicked gap
+  SelectCategory category -> do
+    H.raise $ CategorySelected category
+  SelectSkill skill -> do
+    H.raise $ SkillSelected skill
+  SelectGap gap -> do
+    H.raise $ GapSelected gap
 
 foreachTouch :: forall m. Applicative m => TE.TouchEvent -> (TET.Touch -> m Unit) -> m Unit
 foreachTouch event f =

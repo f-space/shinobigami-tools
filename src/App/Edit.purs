@@ -138,12 +138,12 @@ render { selectionMode, skills, gaps, options } =
     gapClasses = MC.toSkillTable gapHeaderClasses
 
 handleMessage :: Table.Message -> Maybe Action
-handleMessage (Table.CategoryClicked category) = Just $ ToggleCategory category
-handleMessage (Table.SkillClicked skill) = Just $ ToggleSkill skill
-handleMessage (Table.GapClicked gap) = Just $ ToggleGap gap
+handleMessage (Table.CategorySelected category) = Just $ ToggleCategory category
+handleMessage (Table.SkillSelected skill) = Just $ ToggleSkill skill
+handleMessage (Table.GapSelected gap) = Just $ ToggleGap gap
 
 handleSelectionMessage :: Table.Message -> Maybe Action
-handleSelectionMessage (Table.SkillClicked skill) = Just $ SelectYoriSkill skill
+handleSelectionMessage (Table.SkillSelected skill) = Just $ SelectYoriSkill skill
 handleSelectionMessage _ = Nothing
 
 handleAction :: Action -> H.HalogenM State Action ChildSlots Message Aff Unit
