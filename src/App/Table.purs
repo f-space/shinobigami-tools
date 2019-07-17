@@ -29,7 +29,6 @@ import Web.Event.Event (Event, EventType(..), preventDefault)
 import Web.Event.EventTarget (dispatchEvent)
 import Web.HTML (window)
 import Web.HTML.HTMLDocument (toDocument)
-import Web.HTML.HTMLElement (toElement)
 import Web.HTML.Window (document)
 import Web.TouchEvent.Touch as TET
 import Web.TouchEvent.TouchEvent as TE
@@ -269,12 +268,12 @@ foreachTouch event f =
 
 getPointedElement :: forall state action slots msg. Int -> Int -> H.HalogenM state action slots msg MonadType (Maybe Element)
 getPointedElement x y =
-  H.getHTMLElementRef (H.RefLabel "table") >>= map join <<< traverse \table ->
+  H.getRef (H.RefLabel "table") >>= map join <<< traverse \table ->
     H.liftEffect $ window
       >>= document
       >>= (elementFromPoint x y <<< toDocument)
       >>= map join <<< traverse \element ->
         let tag = tagName element
         in if tag == "TD" || tag == "TH"
-          then (if _ then Just element else Nothing) <$> contains ((toNode <<< toElement) table) (toNode element)
+          then (if _ then Just element else Nothing) <$> contains (toNode table) (toNode element)
           else pure Nothing
