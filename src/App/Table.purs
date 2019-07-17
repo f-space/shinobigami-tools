@@ -18,11 +18,12 @@ import Data.Map (Map, delete, empty, insert, values)
 import Data.Maybe (Maybe(..))
 import Data.Traversable (traverse)
 import Effect.Aff (Aff)
+import FFI.CustomEvent (customEvent, detail, toEvent, unsafeFromEvent)
+import FFI.Document (elementFromPoint)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import TableFFI (customEvent, detail, elementFromPoint, toEvent, unsafeFromEvent)
 import Web.DOM.Element (Element, tagName, toEventTarget, toNode)
 import Web.DOM.Node (contains)
 import Web.Event.Event (Event, EventType(..), preventDefault)
