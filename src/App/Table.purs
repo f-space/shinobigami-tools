@@ -22,7 +22,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import TableFFI (defaultEventInit, detail, elementFromPoint, newCustomEvent, toEvent, unsafeFromEvent)
+import TableFFI (customEvent, detail, elementFromPoint, toEvent, unsafeFromEvent)
 import Web.DOM.Element (Element, tagName, toEventTarget, toNode)
 import Web.DOM.Node (contains)
 import Web.Event.Event (Event, EventType(..), preventDefault)
@@ -238,16 +238,16 @@ handleAction = case _ of
     result <- getPointedElement x y
     case result of
       Just element ->
-        H.liftEffect $
-          let event = newCustomEvent hoverEventType $ defaultEventInit { detail = pointer }
-          in void $ dispatchEvent (toEvent event) (toEventTarget element)
+        H.liftEffect $ do
+          event <- customEvent hoverEventType { detail: pointer }
+          void $ dispatchEvent (toEvent event) (toEventTarget element)
       Nothing ->
         H.modify_ \s -> s { pointers = delete pointer s.pointers }
   Select x y pointer -> do
     getPointedElement x y >>= traverse_ \element ->
-      H.liftEffect $
-        let event = newCustomEvent selectEventType defaultEventInit
-        in void $ dispatchEvent (toEvent event) (toEventTarget element)
+      H.liftEffect $ do
+        event <- customEvent selectEventType {}
+        void $ dispatchEvent (toEvent event) (toEventTarget element)
     H.modify_ \s -> s { pointers = delete pointer s.pointers }
   Cancel pointer -> do
     H.modify_ \s -> s { pointers = delete pointer s.pointers }

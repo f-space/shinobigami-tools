@@ -12,10 +12,12 @@ exports.elementFromPoint_ = function (x, y, document) {
 }
 
 /**
- * @type {<T>(typeArg: string, eventInitDict?: CustomEventInit<T>) => CustomEvent<T>}
+ * @type {<T>(typeArg: string, eventInitDict?: CustomEventInit<T>) => () => CustomEvent<T>}
  */
-exports.newCustomEvent_ = function (typeArg, eventInitDict) {
-	return new CustomEvent(typeArg, eventInitDict);
+exports.customEvent_ = function (typeArg, eventInitDict) {
+	return function () {
+		return new CustomEvent(typeArg, eventInitDict);
+	}
 }
 
 /**
