@@ -46,7 +46,7 @@ data Mode = RouteMode | CostMode | SelectionMode
 
 data Action
   = HandleInput Input
-  | SelectMode Mode
+  | ChangeMode Mode
   | SelectSkill Skill
   | ToggleHealth SkillCategory
   | ToggleBarrier SkillCategoryGap
@@ -138,7 +138,7 @@ render { mode, selection, health, paralysis, barriers, skills, gaps, options } =
       , HH.span
         [ HP.classes $ H.ClassName <$> ["option", "paralysis"] <> if foldl (||) false paralysis then ["checked"] else []
         , HP.attr (H.AttrName "data-index") $ show 3
-        , HE.onClick \_ -> Just $ SelectMode case mode of
+        , HE.onClick \_ -> Just $ ChangeMode case mode of
           SelectionMode -> RouteMode
           _ -> SelectionMode
         ]
@@ -170,7 +170,7 @@ render { mode, selection, health, paralysis, barriers, skills, gaps, options } =
     renderMode value label =
       HH.span
         [ HP.classes $ H.ClassName <$> cons "mode" if value == mode then ["checked"] else []
-        , HE.onClick \_ -> Just $ SelectMode value
+        , HE.onClick \_ -> Just $ ChangeMode value
         ]
         [ HH.text label ]
   
@@ -237,7 +237,7 @@ handleAction :: Action -> H.HalogenM State Action ChildSlots Message MonadType U
 handleAction = case _ of
   HandleInput input -> do
     H.put $ initialState input
-  SelectMode mode -> do
+  ChangeMode mode -> do
     H.modify_ \s -> s { mode = mode }
   SelectSkill skill -> do
     H.modify_ \s -> case s.mode of
