@@ -18,15 +18,16 @@ import Data.Map (Map, delete, empty, insert, values)
 import Data.Maybe (Maybe(..))
 import Data.Traversable (traverse)
 import Effect.Aff (Aff)
-import FFI.CustomEvent (customEvent, detail, toEvent, unsafeFromEvent)
+import FFI.CustomEvent (CustomEvent, customEvent, detail, eventType, toEvent, unsafeFromEvent)
 import FFI.Document (elementFromPoint)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
+import Type.Proxy (Proxy(..))
 import Web.DOM.Element (Element, tagName, toEventTarget, toNode)
 import Web.DOM.Node (contains)
-import Web.Event.Event (Event, EventType(..), preventDefault)
+import Web.Event.Event (preventDefault)
 import Web.Event.EventTarget (dispatchEvent)
 import Web.HTML (window)
 import Web.HTML.HTMLDocument (toDocument)
@@ -87,16 +88,19 @@ type MonadType = Aff
 
 type ComponentHTML = H.ComponentHTML Action ChildSlots MonadType
 
+type HoverEvent = CustomEvent "table-hover" Pointer
+type SelectEvent = CustomEvent "table-select" Unit
+
 derive instance eqPointer :: Eq Pointer
 derive instance ordPointer :: Ord Pointer
 
 derive instance eqCell :: Eq Cell
 
-hoverEventType :: String
-hoverEventType = "hover-table-item"
+_hover :: Proxy HoverEvent
+_hover = Proxy
 
-selectEventType :: String
-selectEventType = "select-table-item"
+_select :: Proxy SelectEvent
+_select = Proxy
 
 component :: H.Component HH.HTML Query Input Message MonadType
 component =
@@ -152,8 +156,8 @@ render { input: { categoryClasses, skillClasses, gapHeaderClasses, gapClasses },
         hoverClass = if GapCell gap `elem` hoverTargets then ["hover"] else []
       in HH.th
         [ HP.classes $ H.ClassName <$> baseClasses <> hoverClass
-        , onHoverTableItem \e -> Just $ SetPointerCell (detail $ unsafeFromEvent e) $ GapCell gap
-        , onSelectTableItem \_ -> Just $ SelectGap gap
+        , onTableHover \e -> Just $ SetPointerCell (detail e) $ GapCell gap
+        , onTableSelect \_ -> Just $ SelectGap gap
         ]
         []
     
@@ -164,8 +168,8 @@ render { input: { categoryClasses, skillClasses, gapHeaderClasses, gapClasses },
         hoverClass = if CategoryCell category `elem` hoverTargets then ["hover"] else []
       in HH.th
         [ HP.classes $ H.ClassName <$> baseClasses <> hoverClass
-        , onHoverTableItem \e -> Just $ SetPointerCell (detail $ unsafeFromEvent e) $ CategoryCell category
-        , onSelectTableItem \_ -> Just $ SelectCategory category
+        , onTableHover \e -> Just $ SetPointerCell (detail e) $ CategoryCell category
+        , onTableSelect \_ -> Just $ SelectCategory category
         ]
         [ HH.text $ display category ]
 
@@ -181,8 +185,8 @@ render { input: { categoryClasses, skillClasses, gapHeaderClasses, gapClasses },
         hoverClass = if GapCell gap `elem` hoverTargets then ["hover"] else []
       in HH.td
         [ HP.classes $ H.ClassName <$> baseClasses <> hoverClass
-        , onHoverTableItem \e -> Just $ SetPointerCell (detail $ unsafeFromEvent e) $ GapCell gap
-        , onSelectTableItem \_ -> Just $ SelectGap gap
+        , onTableHover \e -> Just $ SetPointerCell (detail e) $ GapCell gap
+        , onTableSelect \_ -> Just $ SelectGap gap
         ]
         []
 
@@ -194,16 +198,16 @@ render { input: { categoryClasses, skillClasses, gapHeaderClasses, gapClasses },
         hoverClass = if SkillCell skill `elem` hoverTargets then ["hover"] else []
       in HH.td
         [ HP.classes $ H.ClassName <$> baseClasses <> hoverClass
-        , onHoverTableItem \e -> Just $ SetPointerCell (detail $ unsafeFromEvent e) $ SkillCell skill
-        , onSelectTableItem \_ -> Just $ SelectSkill skill
+        , onTableHover \e -> Just $ SetPointerCell (detail e) $ SkillCell skill
+        , onTableSelect \_ -> Just $ SelectSkill skill
         ]
         [ HH.text $ display skill ]
 
-    onHoverTableItem :: forall r i. (Event -> Maybe i) -> HP.IProp r i
-    onHoverTableItem = HE.handler (EventType hoverEventType)
+    onTableHover :: forall r i. (HoverEvent -> Maybe i) -> HP.IProp r i
+    onTableHover handler = HE.handler (eventType _hover) $ handler <<< unsafeFromEvent
     
-    onSelectTableItem :: forall r i. (Event -> Maybe i) -> HP.IProp r i
-    onSelectTableItem = HE.handler (EventType selectEventType)
+    onTableSelect :: forall r i. (SelectEvent -> Maybe i) -> HP.IProp r i
+    onTableSelect handler = HE.handler (eventType _select) $ handler <<< unsafeFromEvent
 
 handleAction :: Action -> H.HalogenM State Action ChildSlots Message MonadType Unit
 handleAction = case _ of
@@ -239,14 +243,14 @@ handleAction = case _ of
     case result of
       Just element ->
         H.liftEffect $ do
-          event <- customEvent hoverEventType { detail: pointer }
+          event <- customEvent _hover { detail: pointer }
           void $ dispatchEvent (toEvent event) (toEventTarget element)
       Nothing ->
         H.modify_ \s -> s { pointers = delete pointer s.pointers }
   Select x y pointer -> do
     getPointedElement x y >>= traverse_ \element ->
       H.liftEffect $ do
-        event <- customEvent selectEventType {}
+        event <- customEvent _select {}
         void $ dispatchEvent (toEvent event) (toEventTarget element)
     H.modify_ \s -> s { pointers = delete pointer s.pointers }
   Cancel pointer -> do
