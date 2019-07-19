@@ -135,6 +135,8 @@ td { display: table-cell; }
 }
 
 #edit {
+	--option-size: 3;
+
 	align-items: center;
 	display: grid;
 	grid-area: edit;
@@ -148,6 +150,8 @@ td { display: table-cell; }
 }
 
 #view {
+	--option-size: 4;
+
 	align-items: center;
 	display: grid;
 	grid-area: view;
@@ -409,19 +413,17 @@ td { display: table-cell; }
 	background-image: none;
 }
 
-.route-mode .table-gap.widen:not(.route),
-.cost-mode .table-gap.widen {
+.table-gap.widen:not(.route) {
 	background-color: rgb(191, 127, 127);
 	box-shadow: inset 0 0 1px .25rem var(--white);
 }
 
-.route-mode .table-gap.widen:not(.route).hover,
-.cost-mode .table-gap.widen.hover {
+.table-gap.widen:not(.route).hover {
 	box-shadow: none;
 }
 
 @media (orientation: portrait) {
-	.route-mode .table-gap.widen.route::before {
+	.table-gap.widen.route::before {
 		background-image:
 			radial-gradient(circle .5rem at 25% 50%, rgb(127, 31, 31) 75%, transparent calc(75% + 1px)),
 			radial-gradient(circle .5rem at 75% 50%, rgb(127, 31, 31) 75%, transparent calc(75% + 1px));
@@ -429,7 +431,7 @@ td { display: table-cell; }
 }
 
 @media (orientation: landscape) {
-	.route-mode .table-gap.widen.route::before {
+	.table-gap.widen.route::before {
 		background-image:
 			radial-gradient(circle .5rem at 50% 25%, rgb(127, 31, 31) 75%, transparent calc(75% + 1px)),
 			radial-gradient(circle .5rem at 50% 75%, rgb(127, 31, 31) 75%, transparent calc(75% + 1px));
@@ -448,13 +450,10 @@ td { display: table-cell; }
 	row-gap: 1rem;
 }
 
-#edit .options { --option-size: 3; }
-#view .options { --option-size: 4; }
-
-.option[data-index="0"], .suboption[data-index="0"] { grid-column: 1; }
-.option[data-index="1"], .suboption[data-index="1"] { grid-column: 2; }
-.option[data-index="2"], .suboption[data-index="2"] { grid-column: 3; }
-.option[data-index="3"], .suboption[data-index="3"] { grid-column: 4; }
+.option.column-0, .option.column-0 ~ .suboption { grid-column: 1; }
+.option.column-1, .option.column-1 ~ .suboption { grid-column: 2; }
+.option.column-2, .option.column-2 ~ .suboption { grid-column: 3; }
+.option.column-3, .option.column-3 ~ .suboption { grid-column: 4; }
 
 .option {
 	border-block-end: 1px solid var(--option-color);
@@ -479,20 +478,16 @@ td { display: table-cell; }
 	opacity: 1;
 }
 
-.option.paralysis {
-	--option-color: rgb(223, 223, 31);
-}
-
-#edit.selection-mode .option[data-index="2"] {
+.option.selection-target {
 	animation: flicker 1s ease-in-out infinite alternate;
 }
 
-#view .option:not(.checked):not(.paralysis) {
+.option.disabled {
 	filter: grayscale();
 }
 
-#view.selection-mode .option.paralysis {
-	animation: flicker 1s ease-in-out infinite alternate;
+.option.paralysis {
+	--option-color: rgb(223, 223, 31);
 }
 
 .suboption {

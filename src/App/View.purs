@@ -16,7 +16,7 @@ import App.Model.Option as MO
 import App.Model.Table as MT
 import App.Table as Table
 import Control.Monad.State (execState, modify_)
-import Data.Array (concat, cons, drop, head, nub, singleton, snoc, zip)
+import Data.Array (catMaybes, concat, cons, drop, head, nub, singleton, snoc, zip)
 import Data.Const (Const)
 import Data.Enum (pred, succ)
 import Data.Foldable (foldl, for_)
@@ -126,26 +126,32 @@ render { mode, selection, health, paralysis, barriers, skills, gaps, options } =
       ]
     , HH.div
       [ HP.class_ $ H.ClassName "options" ]
-      [ renderOption 0 (MO.hasMakaikogaku options) "魔界工学"
-      , renderOption 1 (MO.hasMokuren options) "木蓮"
-      , renderOption 2 (MO.hasYori options) "妖理"
+      [ renderOption "魔界工学" 0 (MO.hasMakaikogaku options)
+      , renderOption "木蓮" 1 (MO.hasMokuren options)
+      , renderOption "妖理" 2 (MO.hasYori options)
       , MO.yoriSkills options # head # maybe (HH.text "") \skill ->
           HH.span
-            [ HP.class_ $ H.ClassName "suboption"
-            , HP.attr (H.AttrName "data-index") $ show 2
-            ]
+            [ HP.class_ $ H.ClassName "suboption" ]
             [ HH.text $ display skill ]
       , HH.span
-        [ HP.classes $ H.ClassName <$> ["option", "paralysis"] <> if foldl (||) false paralysis then ["checked"] else []
-        , HP.attr (H.AttrName "data-index") $ show 3
-        , HE.onClick \_ -> Just $ ChangeMode case mode of
-          SelectionMode -> RouteMode
-          _ -> SelectionMode
+        [ HP.classes $ H.ClassName <$> catMaybes
+          [ Just "option"
+          , Just "column-3"
+          , Just "paralysis"
+          , if foldl (||) false paralysis then Just "checked" else Nothing
+          , if inSelectionMode then Just "selection-target" else Nothing
+          ]
+        , HE.onClick \_ -> Just $ ChangeMode if inSelectionMode then RouteMode else SelectionMode
         ]
         [ HH.text "マヒ" ]
       ]
     ]
   where
+    inSelectionMode :: Boolean
+    inSelectionMode = case mode of
+      SelectionMode -> true
+      _ -> false
+  
     graph :: Maybe MG.SkillGraph
     graph =
       let
@@ -174,11 +180,14 @@ render { mode, selection, health, paralysis, barriers, skills, gaps, options } =
         ]
         [ HH.text label ]
   
-    renderOption :: Int -> Boolean -> String -> ComponentHTML
-    renderOption index value label =
+    renderOption :: String -> Int -> Boolean -> ComponentHTML
+    renderOption label column checked =
       HH.span
-        [ HP.classes $ H.ClassName <$> cons "option" if value then ["checked"] else []
-        , HP.attr (H.AttrName "data-index") $ show index
+        [ HP.classes $ H.ClassName <$> catMaybes
+          [ Just "option"
+          , Just $ "column-" <> show column
+          , if checked then Just "checked" else Just "disabled"
+          ]
         ]
         [ HH.text label ]
     
