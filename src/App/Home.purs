@@ -48,7 +48,9 @@ initialState = const unit
 render :: State -> ComponentHTML
 render _ =
   HH.section
-    [ HP.id_ "home" ]
+    [ HP.id_ "home"
+    , HP.class_ $ H.ClassName "page"
+    ]
     [ HH.div
       [ HP.class_ $ H.ClassName "start"
       , HE.onClick \_ -> Just Start

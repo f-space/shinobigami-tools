@@ -106,7 +106,7 @@ render :: State -> ComponentHTML
 render { mode, selection, health, paralysis, barriers, skills, gaps, options } =
   HH.section
     [ HP.id_ "view"
-    , HP.class_ $ H.ClassName $ show mode
+    , HP.classes $ H.ClassName <$> ["page", show mode]
     ]
     [ HH.h1 [ HP.class_ $ H.ClassName "heading" ] [ HH.text "判定" ]
     , HH.slot _table unit Table.component tableInput handleMessage

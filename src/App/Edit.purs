@@ -84,7 +84,10 @@ render :: State -> ComponentHTML
 render { selectionMode, skills, gaps, options } =
   HH.section
     [ HP.id_ "edit"
-    , HP.classes $ H.ClassName <$> if selectionMode then ["selection-mode"] else []
+    , HP.classes $ H.ClassName <$> catMaybes
+      [ Just "page"
+      , if selectionMode then Just "selection-mode" else Nothing
+      ]
     ]
     [ HH.h1 [ HP.class_ $ H.ClassName "heading" ] [ HH.text "設定" ]
     , HH.slot _table unit Table.component tableInput

@@ -46,8 +46,8 @@ td { display: table-cell; }
 
 #track {
 	bottom: 0;
-	display: grid;
-	grid-template: 100% / repeat(3, 100%);
+	display: flex;
+	flex-wrap: nowrap;
 	left: 0;
 	position: absolute;
 	right: 0;
@@ -57,17 +57,32 @@ td { display: table-cell; }
 }
 
 @media (orientation: portrait) {
-	#track { grid-template-areas: "view edit home"; }
-	#track[data-page="home"] { transform: translateX(-200%); }
-	#track[data-page="edit"] { transform: translateX(-100%); }
-	#track[data-page="view"] { transform: none; }
+	#track { flex-direction: row-reverse; }
+	#track[data-page="home"] { transform: none; }
+	#track[data-page="edit"] { transform: translateX(100%); }
+	#track[data-page="view"] { transform: translateX(200%); }
 }
 
 @media (orientation: landscape) {
-	#track { grid-template-areas: "home edit view"; }
+	#track { flex-direction: row; }
 	#track[data-page="home"] { transform: none; }
 	#track[data-page="edit"] { transform: translateX(-100%); }
 	#track[data-page="view"] { transform: translateX(-200%); }
+}
+
+.page {
+	flex: none;
+	height: 100%;
+	overflow: hidden;
+	width: 100%;
+}
+
+@media (orientation: portrait) {
+	.page { writing-mode: vertical-rl; }
+}
+
+@media (orientation: landscape) {
+	.page { writing-mode: horizontal-tb; }
 }
 
 #back {
@@ -129,9 +144,7 @@ td { display: table-cell; }
 #home {
 	align-items: center;
 	display: flex;
-	grid-area: home;
 	justify-content: space-around;
-	overflow: hidden;
 }
 
 #edit {
@@ -139,14 +152,12 @@ td { display: table-cell; }
 
 	align-items: center;
 	display: grid;
-	grid-area: edit;
 	grid-template:
 		"clear header  complete" 1fr
 		"clear table   complete" 3fr
 		"clear options complete" 1fr
 		/ 1fr auto 1fr;
 	justify-items: center;
-	overflow: hidden;
 }
 
 #view {
@@ -154,26 +165,12 @@ td { display: table-cell; }
 
 	align-items: center;
 	display: grid;
-	grid-area: view;
 	grid-template:
 		"result header  modes" 1fr
 		"result table   modes" 3fr
 		"result options modes" 1fr
 		/ 1fr auto 1fr;
 	justify-items: center;
-	overflow: hidden;
-}
-
-@media (orientation: portrait) {
-	#home { writing-mode: vertical-rl; }
-	#edit { writing-mode: vertical-rl; }
-	#view { writing-mode: vertical-rl; }
-}
-
-@media (orientation: landscape) {
-	#home { writing-mode: horizontal-tb; }
-	#edit { writing-mode: horizontal-tb; }
-	#view { writing-mode: horizontal-tb; }
 }
 
 .start {
@@ -703,14 +700,4 @@ td { display: table-cell; }
 	border-inline-end: .25em solid;
 	border-inline-start: .25em solid;
 	border-color: var(--option-color);
-}
-
-/* workaround for Chrome */
-@media (orientation: portrait) {
-	#edit::before {
-		content: "";
-		grid-area: complete;
-		visibility: hidden;
-		writing-mode: horizontal-tb;
-	}
 }
