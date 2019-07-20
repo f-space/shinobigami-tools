@@ -54,6 +54,7 @@ data Action
   | MouseDown ME.MouseEvent
   | MouseUp ME.MouseEvent
   | MouseMove ME.MouseEvent
+  | MouseLeave ME.MouseEvent
   | TouchStart TE.TouchEvent
   | TouchEnd TE.TouchEvent
   | TouchMove TE.TouchEvent
@@ -124,6 +125,7 @@ render { input: { categoryClasses, skillClasses, gapHeaderClasses, gapClasses },
     , HE.onMouseDown (Just <<< MouseDown)
     , HE.onMouseUp (Just <<< MouseUp)
     , HE.onMouseMove (Just <<< MouseMove)
+    , HE.onMouseLeave (Just <<< MouseLeave)
     , HE.onTouchStart (Just <<< TouchStart)
     , HE.onTouchEnd (Just <<< TouchEnd)
     , HE.onTouchMove (Just <<< TouchMove)
@@ -222,6 +224,9 @@ handleAction = case _ of
   MouseMove event -> do
     H.liftEffect $ preventDefault $ ME.toEvent event
     handleAction $ Hover (ME.pageX event) (ME.pageY event) Mouse
+  MouseLeave event -> do
+    H.liftEffect $ preventDefault $ ME.toEvent event
+    handleAction $ Cancel Mouse
   TouchStart event -> do
     H.liftEffect $ preventDefault $ TE.toEvent event
     foreachTouch event \touch ->
