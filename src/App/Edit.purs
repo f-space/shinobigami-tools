@@ -13,7 +13,7 @@ import App.Model.Column as MC
 import App.Model.Option as MO
 import App.Model.Table as MT
 import App.Table as Table
-import Data.Array (cons, head)
+import Data.Array (catMaybes, head)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Set (Set, empty, filter, insert)
@@ -84,21 +84,22 @@ render :: State -> ComponentHTML
 render { selectionMode, skills, gaps, options } =
   HH.section
     [ HP.id_ "edit"
-    , HP.classes $ H.ClassName <$> if selectionMode then ["selection-mode"] else []
+    , HP.classes $ H.ClassName <$> catMaybes
+      [ Just "page"
+      , if selectionMode then Just "selection-mode" else Nothing
+      ]
     ]
     [ HH.h1 [ HP.class_ $ H.ClassName "heading" ] [ HH.text "設定" ]
     , HH.slot _table unit Table.component tableInput
         if selectionMode then handleSelectionMessage else handleMessage
     , HH.div
       [ HP.class_ $ H.ClassName "options"]
-      [ renderOption 0 (MO.hasMakaikogaku options) "魔界工学" $ ToggleOption Makaikogaku
-      , renderOption 1 (MO.hasMokuren options) "木蓮" $ ToggleOption Mokuren
-      , renderOption 2 (MO.hasYori options) "妖理" $ ToggleYori
+      [ renderOption "魔界工学" 0 (MO.hasMakaikogaku options) false $ ToggleOption Makaikogaku
+      , renderOption "木蓮" 1 (MO.hasMokuren options) false $ ToggleOption Mokuren
+      , renderOption "妖理" 2 (MO.hasYori options) selectionMode $ ToggleYori
       , MO.yoriSkills options # head # maybe (HH.text "") \skill ->
           HH.span
-            [ HP.class_ $ H.ClassName "suboption"
-            , HP.attr (H.AttrName "data-index") $ show 2
-            ]
+            [ HP.class_ $ H.ClassName "suboption" ]
             [ HH.text $ display skill ]
       ]
     , HH.div
@@ -113,11 +114,15 @@ render { selectionMode, skills, gaps, options } =
       [ HH.text "完了" ]
     ]
   where
-    renderOption :: Int -> Boolean -> String -> Action -> ComponentHTML
-    renderOption index value label action =
+    renderOption :: String -> Int -> Boolean -> Boolean -> Action -> ComponentHTML
+    renderOption label column checked target action =
       HH.span
-        [ HP.classes $ H.ClassName <$> cons "option" if value then ["checked"] else []
-        , HP.attr (H.AttrName "data-index") $ show index
+        [ HP.classes $ H.ClassName <$> catMaybes
+          [ Just "option"
+          , Just $ "column-" <> show column
+          , if checked then Just "checked" else Nothing
+          , if target then Just "selection-target" else Nothing
+          ]
         , HE.onClick \_ -> Just action
         ]
         [ HH.text label ]
