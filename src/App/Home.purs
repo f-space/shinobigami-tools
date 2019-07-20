@@ -51,12 +51,37 @@ render _ =
     [ HP.id_ "home"
     , HP.class_ $ H.ClassName "page"
     ]
-    [ HH.div
+    [ HH.h1
+      [ HP.class_ $ H.ClassName "title" ]
+      [ HH.text "シノビガミ 判定ツール"]
+    , HH.div
       [ HP.class_ $ H.ClassName "start"
       , HE.onClick \_ -> Just Start
       ]
       [ HH.text "開始" ]
+    , HH.div
+      [ HP.class_ $ H.ClassName "recommendation" ]
+      [ HH.text "横画面推奨" ]
+    , HH.footer
+      [ HP.class_ $ H.ClassName "information" ]
+      [ HH.span_ [ HH.text "Version" ]
+      , HH.span_ [ HH.text "1.0.0" ]
+      , HH.span_ [ HH.text "Author" ]
+      , HH.span_ 
+        [ HH.text "F_"
+        , HH.a
+          [ HP.class_ $ H.ClassName "contact"
+          , HP.href "https://twitter.com/fspace_"
+          ]
+          [ HH.text "@fspace_" ]
+        ]
+      , HH.span_ [ HH.text "Link" ]
+      , HH.span_ [ HH.a [ HP.href "https://coc.f-sp.com/" ] [ HH.text "クトゥルフTRPG ツール" ] ]
+      ]
     ]
+  where
+    label :: forall w i. String -> HH.HTML w i
+    label text = HH.span [ HP.class_ $ H.ClassName "info-label" ] [ HH.text text ]
 
 handleAction :: Action -> H.HalogenM State Action ChildSlots Message MonadType Unit
 handleAction = case _ of

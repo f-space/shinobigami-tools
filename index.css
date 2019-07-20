@@ -19,6 +19,8 @@ tr { display: table-row; }
 th { display: table-cell; }
 td { display: table-cell; }
 
+a { cursor: pointer; }
+
 :root {
 	--black: rgb(31, 31, 31);
 	--blue: rgb(31, 31, 223);
@@ -143,8 +145,10 @@ td { display: table-cell; }
 
 #home {
 	align-items: center;
-	display: flex;
-	justify-content: space-around;
+	display: grid;
+	grid-template: 30% 40% 30% / auto;
+	justify-items: center;
+	position: relative;
 }
 
 #edit {
@@ -171,6 +175,21 @@ td { display: table-cell; }
 		"result options modes" 1fr
 		/ 1fr auto 1fr;
 	justify-items: center;
+}
+
+.title {
+	align-self: flex-end;
+	color: var(--black);
+	font-feature-settings: "palt";
+	font-size: 10rem;
+	font-weight: bold;
+	line-height: 1;
+	text-shadow:
+		-1px -1px 0 var(--red),
+		-1px 1px 0 var(--red),
+		1px -1px 0 var(--red),
+		1px 1px 0 var(--red),
+		0 0 5px var(--red);
 }
 
 .start {
@@ -200,6 +219,55 @@ td { display: table-cell; }
 		.087em -.05em 0 var(--red),
 		.087em .05em 0 var(--red),
 		.1em 0 0 var(--red);
+}
+
+.recommendation {
+	animation: rotation 3s ease-in-out infinite;
+	color: var(--black);
+	font-size: 4rem;
+	font-weight: bold;
+	justify-self: flex-end;
+	line-height: 1;
+	margin-inline-end: 5em;
+	text-shadow:
+		-1px -1px 0 rgb(223, 159, 31),
+		-1px 1px 0 rgb(223, 159, 31),
+		1px -1px 0 rgb(223, 159, 31),
+		1px 1px 0 rgb(223, 159, 31),
+		0 0 5px rgb(223, 159, 31);
+}
+
+@media (orientation: landscape) {
+	.recommendation { display: none; }
+}
+
+.information {
+	bottom: 1em;
+	color: var(--white);
+	column-gap: .5em;
+	display: grid;
+	font-size: 1.5rem;
+	grid-auto-flow: row;
+	grid-template-columns: auto auto;
+	left: 1em;
+	line-height: 1.4;
+	position: absolute;
+	writing-mode: horizontal-tb;
+}
+
+.information a {
+	--text-color: rgb(223, 64, 64);
+
+	color: var(--text-color);
+	text-decoration: underline solid var(--text-color);
+}
+
+.information a:hover {
+	--text-color: rgb(223, 127, 127);
+}
+
+.contact {
+	margin-inline-start: .5em;
 }
 
 .heading {
@@ -661,6 +729,11 @@ td { display: table-cell; }
 @keyframes flicker {
 	0% { opacity: 1; }
 	100% { opacity: 0.5; }
+}
+
+@keyframes rotation {
+	0%, 80% { transform: none; }
+	100% { transform: rotate(-360deg); }
 }
 
 @media (max-width: 1800px) and (max-height: 1800px) { :root { font-size: calc(100% / 16 * 15); } }
