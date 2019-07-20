@@ -73,10 +73,10 @@ a { cursor: pointer; }
 }
 
 .page {
+	block-size: 100%;
 	flex: none;
-	height: 100%;
+	inline-size: 100%;
 	overflow: hidden;
-	width: 100%;
 }
 
 @media (orientation: portrait) {
@@ -105,9 +105,9 @@ a { cursor: pointer; }
 	bottom: 0;
 	content: "";
 	display: block;
+	inline-size: 0;
 	position: absolute;
 	top: 0;
-	width: 0;
 }
 
 @media (orientation: portrait) {
