@@ -384,17 +384,26 @@ a { cursor: pointer; }
 
 .table-skill::before {
 	color: rgb(127, 31, 31);
+	font-size: 300%;
 	font-weight: bold;
 	padding: inherit;
 	text-shadow: none;
 }
 
 @media (orientation: portrait) {
-	.table-skill::before { transform: rotate(-60deg) scale(3, 2) skewX(-30deg); }
+	.table-skill::before {
+		left: calc(-1em / 3);
+		right: calc(-1em / 3);
+		transform: rotate(-60deg) skewX(-45deg) scaleY(calc(2 / 3));
+	}
 }
 
 @media (orientation: landscape) {
-	.table-skill::before { transform: rotate(30deg) scale(3, 2) skewX(-30deg); }
+	.table-skill::before {
+		bottom: calc(-1em / 3);
+		top: calc(-1em / 3);
+		transform: rotate(30deg) skewX(-45deg) scaleY(calc(2 / 3));
+	}
 }
 
 .table-skill.disabled {
