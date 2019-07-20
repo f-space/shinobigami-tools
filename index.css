@@ -90,6 +90,7 @@ a { cursor: pointer; }
 #back {
 	border-block-end: 1px solid var(--red);
 	color: var(--white);
+	cursor: pointer;
 	font-size: 2rem;
 	font-weight: bold;
 	position: absolute;
@@ -195,6 +196,7 @@ a { cursor: pointer; }
 .start {
 	animation: flicker 1s ease-in-out infinite alternate;
 	color: var(--white);
+	cursor: pointer;
 	filter: drop-shadow(0 0 .1em var(--white));
 	font-size: 8rem;
 	font-weight: bold;
@@ -526,6 +528,7 @@ a { cursor: pointer; }
 	border-inline-end: .5em double var(--option-color);
 	border-inline-start: .5em double var(--option-color);
 	color: var(--white);
+	cursor: pointer;
 	font-size: calc(2.5rem * var(--font-scale, 1));
 	font-weight: bold;
 	grid-row: 1;
@@ -547,7 +550,11 @@ a { cursor: pointer; }
 	animation: flicker 1s ease-in-out infinite alternate;
 }
 
-.option.disabled {
+.option.readonly {
+	cursor: auto;
+}
+
+.option.readonly:not(.checked) {
 	filter: grayscale();
 }
 
@@ -577,6 +584,7 @@ a { cursor: pointer; }
 .clear {
 	align-self: flex-end;
 	color: var(--white);
+	cursor: pointer;
 	filter: drop-shadow(0 0 .1em var(--white));
 	font-size: 3rem;
 	font-weight: bold;
@@ -597,6 +605,7 @@ a { cursor: pointer; }
 .complete {
 	align-self: flex-end;
 	color: var(--white);
+	cursor: pointer;
 	filter: drop-shadow(0 0 .1em var(--white));
 	font-size: 4rem;
 	font-weight: bold;
@@ -701,6 +710,7 @@ a { cursor: pointer; }
 
 .mode {
 	border: 1px solid var(--red);
+	cursor: pointer;
 	font-size: 4rem;
 	line-height: 1;
 	padding-block-end: .25em;
@@ -717,6 +727,7 @@ a { cursor: pointer; }
 	background-origin: border-box;
 	border: none;
 	color: var(--white);
+	cursor: auto;
 	font-weight: bold;
 	text-shadow:
 		-1px -1px 0 var(--red),

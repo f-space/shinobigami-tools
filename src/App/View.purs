@@ -186,7 +186,8 @@ render { mode, selection, health, paralysis, barriers, skills, gaps, options } =
         [ HP.classes $ H.ClassName <$> catMaybes
           [ Just "option"
           , Just $ "column-" <> show column
-          , if checked then Just "checked" else Just "disabled"
+          , Just "readonly"
+          , if checked then Just "checked" else Nothing
           ]
         ]
         [ HH.text label ]
