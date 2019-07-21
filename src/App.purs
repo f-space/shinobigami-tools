@@ -3,6 +3,7 @@ module App (component) where
 import Prelude
 
 import App.Edit as Edit
+import App.Help as Help
 import App.Home as Home
 import App.Model (Option, SkillColumn, SkillTable)
 import App.View as View
@@ -24,6 +25,7 @@ type State =
   , skills :: SkillTable Boolean
   , gaps :: SkillColumn Boolean
   , options :: Set Option
+  , help :: Boolean
   }
 
 data Action
@@ -31,6 +33,7 @@ data Action
   | SetSkills (SkillTable Boolean)
   | SetGaps (SkillColumn Boolean)
   | SetOptions (Set Option)
+  | SetHelpOpen Boolean
 
 type Query = Const Void
 
@@ -44,6 +47,7 @@ type ChildSlots =
   ( home :: Home.Slot Unit
   , edit :: Edit.Slot Unit
   , view :: View.Slot Unit
+  , help :: Help.Slot Unit
   )
 
 type MonadType = Aff
@@ -69,6 +73,9 @@ _edit = SProxy
 _view :: SProxy "view"
 _view = SProxy
 
+_help :: SProxy "help"
+_help = SProxy
+
 component :: H.Component HH.HTML Query Input Message MonadType
 component =
   H.mkComponent
@@ -83,15 +90,16 @@ initialState _ =
   , skills: pure false
   , gaps: pure false
   , options: empty
+  , help: false
   }
 
 render :: State -> ComponentHTML
-render state =
+render state @ { page, help } =
   HH.div
     [ HP.id_ "container" ]
     [ HH.div
       [ HP.id_ "track"
-      , HP.attr (H.AttrName "data-page") $ pageId state.page
+      , HP.attr (H.AttrName "data-page") $ pageId page
       ]
       [ HH.slot _home unit Home.component unit handleHomeMessage
       , HH.slot _edit unit Edit.component (editInput state) handleEditMessage
@@ -99,9 +107,17 @@ render state =
       ]
     , HH.div
       [ HP.id_ "back"
-      , HE.onClick \_ -> Go <$> pred state.page
+      , HE.onClick \_ -> Go <$> pred page
       ]
       [ HH.text "戻る" ]
+    , HH.div
+      [ HP.id_ "help-icon"
+      , HE.onClick \_ -> Just $ SetHelpOpen true
+      ]
+      []
+    , if help
+      then HH.slot _help unit Help.component unit handleHelpMessage
+      else HH.text ""
     ]
   where
     pageId :: Page -> String
@@ -125,6 +141,9 @@ handleEditMessage (Edit.GapChanged gaps) = Just $ SetGaps gaps
 handleEditMessage (Edit.OptionChanged options) = Just $ SetOptions options
 handleEditMessage Edit.Done = Go <$> succ Edit
 
+handleHelpMessage :: Help.Message -> Maybe Action
+handleHelpMessage Help.Closed = Just $ SetHelpOpen false
+
 handleAction :: Action -> H.HalogenM State Action ChildSlots Message MonadType Unit
 handleAction = case _ of
   Go p -> do
@@ -135,3 +154,5 @@ handleAction = case _ of
     H.modify_ (_ { gaps = gaps })
   SetOptions options -> do
     H.modify_ (_ { options = options })
+  SetHelpOpen open -> do
+    H.modify_ (_ { help = open })
