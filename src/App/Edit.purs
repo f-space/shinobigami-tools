@@ -1,6 +1,6 @@
 module App.Edit
   ( component
-  , Query
+  , Query(..)
   , Input
   , Message(..)
   , Slot
@@ -14,7 +14,6 @@ import App.Model.Option as MO
 import App.Model.Table as MT
 import App.Table as Table
 import Data.Array (catMaybes, head)
-import Data.Const (Const)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Set (Set, empty, filter, insert)
 import Data.Symbol (SProxy(..))
@@ -42,7 +41,7 @@ data Action
   | Clear
   | Complete
 
-type Query = Const Void
+data Query a = Reset a
 
 type Input =
   { skills :: SkillTable Boolean
@@ -74,6 +73,7 @@ component =
     , render
     , eval: H.mkEval $ H.defaultEval
       { handleAction = handleAction
+      , handleQuery = handleQuery
       , receive = Just <<< HandleInput
       }
     }
@@ -185,8 +185,15 @@ handleAction = case _ of
     H.modify_ \s -> s { selectionMode = false }
     H.raise $ OptionChanged $ insert (Yori skill) $ filter (not <<< MO.isYori) options
   Clear -> do
+    H.modify_ \s -> s { selectionMode = false }
     H.raise $ SkillChanged $ MT.fill false
     H.raise $ GapChanged $ MC.fill false
     H.raise $ OptionChanged empty
   Complete -> do
     H.raise Done
+
+handleQuery :: forall a. Query a -> H.HalogenM State Action ChildSlots Message MonadType (Maybe a)
+handleQuery = case _ of
+  Reset next -> do
+    H.modify_ \s -> s { selectionMode = false }
+    pure $ Just next

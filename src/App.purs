@@ -163,9 +163,10 @@ handleAction :: Action -> H.HalogenM State Action ChildSlots Message MonadType U
 handleAction = case _ of
   Go page -> do
     H.modify_ (_ { page = page })
-    if page == View
-      then void $ H.queryAll _view $ H.tell $ View.Reset
-      else pure unit
+    case page of
+      Edit -> void $ H.queryAll _edit $ H.tell $ Edit.Reset
+      View -> void $ H.queryAll _view $ H.tell $ View.Reset
+      _ -> pure unit
   SetSkills skills -> do
     H.modify_ (_ { skills = skills })
   SetGaps gaps -> do
