@@ -35,7 +35,7 @@ type State =
   { mode :: Mode
   , selection :: Maybe Skill
   , health :: SkillColumn Boolean
-  , paralysis :: SkillTable Boolean
+  , paralyses :: SkillTable Boolean
   , barriers :: SkillColumn Boolean
   , skills :: SkillTable Boolean
   , gaps :: SkillColumn Boolean
@@ -95,7 +95,7 @@ initialState { skills, gaps, options } =
   { mode: RouteMode
   , selection: Nothing
   , health: pure true
-  , paralysis: pure false
+  , paralyses: pure false
   , barriers: pure false
   , skills
   , gaps
@@ -103,7 +103,7 @@ initialState { skills, gaps, options } =
   }
 
 render :: State -> ComponentHTML
-render { mode, selection, health, paralysis, barriers, skills, gaps, options } =
+render { mode, selection, health, paralyses, barriers, skills, gaps, options } =
   HH.section
     [ HP.id_ "view"
     , HP.classes $ H.ClassName <$> ["page", show mode]
@@ -138,7 +138,7 @@ render { mode, selection, health, paralysis, barriers, skills, gaps, options } =
           [ Just "option"
           , Just "column-3"
           , Just "paralysis"
-          , if foldl (||) false paralysis then Just "checked" else Nothing
+          , if foldl (||) false paralyses then Just "checked" else Nothing
           , if inSelectionMode then Just "selection-target" else Nothing
           ]
         , HE.onClick \_ -> Just $ ChangeMode if inSelectionMode then RouteMode else SelectionMode
@@ -155,7 +155,7 @@ render { mode, selection, health, paralysis, barriers, skills, gaps, options } =
     graph :: Maybe MG.SkillGraph
     graph =
       let
-        enabled = (\a b -> a && not b) <$> MC.toSkillTable health <*> paralysis
+        enabled = (\a b -> a && not b) <$> MC.toSkillTable health <*> paralyses
         table = (&&) <$> skills <*> enabled
         transform = MGO.toTransform $ MO.toGraphOptions gaps barriers options
       in MG.build table transform
@@ -202,7 +202,7 @@ render { mode, selection, health, paralysis, barriers, skills, gaps, options } =
     skillClasses =
       let
         disabled = MC.toSkillTable $ (if _ then [] else ["disabled"]) <$> health
-        paralyzed = (if _ then ["paralyzed"] else []) <$> paralysis
+        paralyzed = (if _ then ["paralyzed"] else []) <$> paralyses
         acquired = (if _ then ["acquired"] else []) <$> skills
         cost = (singleton <<< append "cost-" <<< show) <$> costTable
         merged = foldl (apply <<< map append) disabled [ paralyzed, acquired, cost ]
@@ -253,7 +253,7 @@ handleAction = case _ of
     H.modify_ \s -> case s.mode of
       SelectionMode -> s
         { mode = RouteMode
-        , paralysis = MT.modify skill not s.paralysis
+        , paralyses = MT.modify skill not s.paralyses
         }
       _ -> s { selection = if Just skill == s.selection then Nothing else Just skill }
   ToggleHealth category -> do
