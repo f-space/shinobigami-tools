@@ -60,12 +60,14 @@ type Slot slot = H.Slot Query Message slot
 
 type ChildSlots = ( table :: Table.Slot Unit )
 
-type ComponentHTML = H.ComponentHTML Action ChildSlots Aff
+type MonadType = Aff
+
+type ComponentHTML = H.ComponentHTML Action ChildSlots MonadType
 
 _table :: SProxy "table"
 _table = SProxy
 
-component :: H.Component HH.HTML Query Input Message Aff
+component :: H.Component HH.HTML Query Input Message MonadType
 component =
   H.mkComponent
     { initialState
@@ -151,7 +153,7 @@ handleSelectionMessage :: Table.Message -> Maybe Action
 handleSelectionMessage (Table.SkillSelected skill) = Just $ SelectYoriSkill skill
 handleSelectionMessage _ = Nothing
 
-handleAction :: Action -> H.HalogenM State Action ChildSlots Message Aff Unit
+handleAction :: Action -> H.HalogenM State Action ChildSlots Message MonadType Unit
 handleAction = case _ of
   HandleInput { skills, gaps, options } -> do
     H.modify_ \s -> s { skills = skills, gaps = gaps, options = options }
