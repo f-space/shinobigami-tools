@@ -1,6 +1,6 @@
 module App.Edit
   ( component
-  , Query
+  , Query(..)
   , Input
   , Message(..)
   , Slot
@@ -14,7 +14,6 @@ import App.Model.Option as MO
 import App.Model.Table as MT
 import App.Table as Table
 import Data.Array (catMaybes, head)
-import Data.Const (Const)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Set (Set, empty, filter, insert)
 import Data.Symbol (SProxy(..))
@@ -42,7 +41,7 @@ data Action
   | Clear
   | Complete
 
-type Query = Const Void
+data Query a = Reset a
 
 type Input =
   { skills :: SkillTable Boolean
@@ -60,18 +59,21 @@ type Slot slot = H.Slot Query Message slot
 
 type ChildSlots = ( table :: Table.Slot Unit )
 
-type ComponentHTML = H.ComponentHTML Action ChildSlots Aff
+type MonadType = Aff
+
+type ComponentHTML = H.ComponentHTML Action ChildSlots MonadType
 
 _table :: SProxy "table"
 _table = SProxy
 
-component :: H.Component HH.HTML Query Input Message Aff
+component :: H.Component HH.HTML Query Input Message MonadType
 component =
   H.mkComponent
     { initialState
     , render
     , eval: H.mkEval $ H.defaultEval
       { handleAction = handleAction
+      , handleQuery = handleQuery
       , receive = Just <<< HandleInput
       }
     }
@@ -151,7 +153,7 @@ handleSelectionMessage :: Table.Message -> Maybe Action
 handleSelectionMessage (Table.SkillSelected skill) = Just $ SelectYoriSkill skill
 handleSelectionMessage _ = Nothing
 
-handleAction :: Action -> H.HalogenM State Action ChildSlots Message Aff Unit
+handleAction :: Action -> H.HalogenM State Action ChildSlots Message MonadType Unit
 handleAction = case _ of
   HandleInput { skills, gaps, options } -> do
     H.modify_ \s -> s { skills = skills, gaps = gaps, options = options }
@@ -183,8 +185,15 @@ handleAction = case _ of
     H.modify_ \s -> s { selectionMode = false }
     H.raise $ OptionChanged $ insert (Yori skill) $ filter (not <<< MO.isYori) options
   Clear -> do
+    H.modify_ \s -> s { selectionMode = false }
     H.raise $ SkillChanged $ MT.fill false
     H.raise $ GapChanged $ MC.fill false
     H.raise $ OptionChanged empty
   Complete -> do
     H.raise Done
+
+handleQuery :: forall a. Query a -> H.HalogenM State Action ChildSlots Message MonadType (Maybe a)
+handleQuery = case _ of
+  Reset next -> do
+    H.modify_ \s -> s { selectionMode = false }
+    pure $ Just next

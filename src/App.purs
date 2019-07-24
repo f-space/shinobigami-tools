@@ -25,6 +25,9 @@ type State =
   , skills :: SkillTable Boolean
   , gaps :: SkillColumn Boolean
   , options :: Set Option
+  , health :: SkillColumn Boolean
+  , paralyses :: SkillTable Boolean
+  , barriers :: SkillColumn Boolean
   , help :: Boolean
   }
 
@@ -33,6 +36,9 @@ data Action
   | SetSkills (SkillTable Boolean)
   | SetGaps (SkillColumn Boolean)
   | SetOptions (Set Option)
+  | SetHealth (SkillColumn Boolean)
+  | SetParalyses (SkillTable Boolean)
+  | SetBarriers (SkillColumn Boolean)
   | SetHelpOpen Boolean
 
 type Query = Const Void
@@ -90,6 +96,9 @@ initialState _ =
   , skills: pure false
   , gaps: pure false
   , options: empty
+  , health: pure true
+  , paralyses: pure false
+  , barriers: pure false
   , help: false
   }
 
@@ -103,7 +112,7 @@ render state @ { page, help } =
       ]
       [ HH.slot _home unit Home.component unit handleHomeMessage
       , HH.slot _edit unit Edit.component (editInput state) handleEditMessage
-      , HH.slot _view unit View.component (viewInput state) $ const Nothing
+      , HH.slot _view unit View.component (viewInput state) handleViewMessage
       ]
     , HH.div
       [ HP.id_ "back"
@@ -130,7 +139,8 @@ render state @ { page, help } =
     editInput { skills, gaps, options } = { skills, gaps, options }
 
     viewInput :: State -> View.Input
-    viewInput { skills, gaps, options } = { skills, gaps, options }
+    viewInput { skills, gaps, options, health, paralyses, barriers } =
+      { skills, gaps, options, health, paralyses, barriers }
 
 handleHomeMessage :: Home.Message -> Maybe Action
 handleHomeMessage Home.Done = Go <$> succ Home
@@ -141,18 +151,33 @@ handleEditMessage (Edit.GapChanged gaps) = Just $ SetGaps gaps
 handleEditMessage (Edit.OptionChanged options) = Just $ SetOptions options
 handleEditMessage Edit.Done = Go <$> succ Edit
 
+handleViewMessage :: View.Message -> Maybe Action
+handleViewMessage (View.HealthChanged health) = Just $ SetHealth health
+handleViewMessage (View.ParalysisChanged paralyses) = Just $ SetParalyses paralyses
+handleViewMessage (View.BarrierChanged barriers) = Just $ SetBarriers barriers
+
 handleHelpMessage :: Help.Message -> Maybe Action
 handleHelpMessage Help.Closed = Just $ SetHelpOpen false
 
 handleAction :: Action -> H.HalogenM State Action ChildSlots Message MonadType Unit
 handleAction = case _ of
-  Go p -> do
-    H.modify_ (_ { page = p })
+  Go page -> do
+    H.modify_ (_ { page = page })
+    case page of
+      Edit -> void $ H.queryAll _edit $ H.tell $ Edit.Reset
+      View -> void $ H.queryAll _view $ H.tell $ View.Reset
+      _ -> pure unit
   SetSkills skills -> do
     H.modify_ (_ { skills = skills })
   SetGaps gaps -> do
     H.modify_ (_ { gaps = gaps })
   SetOptions options -> do
     H.modify_ (_ { options = options })
+  SetHealth health -> do
+    H.modify_ (_ { health = health })
+  SetParalyses paralyses -> do
+    H.modify_ (_ { paralyses = paralyses })
+  SetBarriers barriers -> do
+    H.modify_ (_ { barriers = barriers })
   SetHelpOpen open -> do
     H.modify_ (_ { help = open })

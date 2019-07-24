@@ -33,14 +33,14 @@ type CustomEventInitFields a =
 eventType :: forall s a. IsSymbol s => Proxy (CustomEvent s a) -> EventType
 eventType _ = EventType $ reflectSymbol (SProxy :: SProxy s)
 
-foreign import customEvent_ :: forall r s a. Fn2 String (Record r) (Effect (CustomEvent s a))
+foreign import _customEvent :: forall r s a. Fn2 String (Record r) (Effect (CustomEvent s a))
 
 customEvent
   :: forall r r' s a
    . Union r r' (CustomEventInitFields a)
   => IsSymbol s
   => Proxy (CustomEvent s a) -> Record r -> Effect (CustomEvent s a)
-customEvent _ = runFn2 customEvent_ $ reflectSymbol (SProxy :: SProxy s)
+customEvent _ = runFn2 _customEvent $ reflectSymbol (SProxy :: SProxy s)
 
 fromEvent :: forall s a. IsSymbol s => Proxy (CustomEvent s a) -> Event -> Maybe (CustomEvent s a)
 fromEvent _ event =

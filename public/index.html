@@ -6,7 +6,7 @@
 	<meta name="application-name" content="シノビガミ 判定ツール" />
 	<meta name="description" content="シノビガミの代用判定支援Webアプリ。修得した特技・忍法・ギャップから目標値や経路、分布を確認。忍法『魔界工学』『木蓮』『妖理』『虚空蔵』『紐切』や背景『異才』、変調『マヒ』に対応。" />
 	<meta name="author" content="F_" />
-	<meta name="theme-color" content="#0f0f0f" />
+	<meta name="theme-color" content="#1f1f1f" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<meta name="twitter:card" content="summary" />
 	<meta name="twitter:site" content="@fspace_" />
@@ -20,9 +20,11 @@
 	<meta property="og:image:height" content="256" />
 	<meta property="og:image:alt" content="アプリアイコン" />
 	<meta property="og:locale" content="ja_JP" />
-	<link rel="icon" type="image/png" href="res/favicon.png" />
+	<link rel="manifest" href="manifest.json" />
+	<link rel="icon" type="image/png" href="res/icon_256x256.png" />
 	<link rel="stylesheet" href="index.css" />
 	<script src="index.js" defer></script>
+	<script> if ('serviceWorker' in navigator) navigator.serviceWorker.register("service-worker.js"); </script>
 </head>
 <body></body>
 </html>

@@ -1,6 +1,6 @@
 module App.View
   ( component
-  , Query
+  , Query(..)
   , Input
   , Message(..)
   , Slot
@@ -17,7 +17,6 @@ import App.Model.Table as MT
 import App.Table as Table
 import Control.Monad.State (execState, modify_)
 import Data.Array (catMaybes, concat, cons, drop, head, nub, singleton, snoc, zip)
-import Data.Const (Const)
 import Data.Enum (pred, succ)
 import Data.Foldable (foldl, for_)
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
@@ -34,12 +33,12 @@ import Halogen.HTML.Properties as HP
 type State =
   { mode :: Mode
   , selection :: Maybe Skill
-  , health :: SkillColumn Boolean
-  , paralysis :: SkillTable Boolean
-  , barriers :: SkillColumn Boolean
   , skills :: SkillTable Boolean
   , gaps :: SkillColumn Boolean
   , options :: Set Option
+  , health :: SkillColumn Boolean
+  , paralyses :: SkillTable Boolean
+  , barriers :: SkillColumn Boolean
   }
 
 data Mode = RouteMode | CostMode | SelectionMode
@@ -48,18 +47,26 @@ data Action
   = HandleInput Input
   | ChangeMode Mode
   | SelectSkill Skill
+  | ToggleSelection Skill
   | ToggleHealth SkillCategory
+  | ToggleParalysis Skill
   | ToggleBarrier SkillCategoryGap
 
-type Query = Const Void
+data Query a = Reset a
 
 type Input =
   { skills :: SkillTable Boolean
   , gaps :: SkillColumn Boolean
   , options :: Set Option
+  , health :: SkillColumn Boolean
+  , paralyses :: SkillTable Boolean
+  , barriers :: SkillColumn Boolean
   }
 
-type Message = Unit
+data Message
+  = HealthChanged (SkillColumn Boolean)
+  | ParalysisChanged (SkillTable Boolean)
+  | BarrierChanged (SkillColumn Boolean)
 
 type Slot slot = H.Slot Query Message slot
 
@@ -86,24 +93,25 @@ component =
     , render
     , eval: H.mkEval $ H.defaultEval
       { handleAction = handleAction
+      , handleQuery = handleQuery
       , receive = Just <<< HandleInput
       }
     }
 
 initialState :: Input -> State
-initialState { skills, gaps, options } =
+initialState { skills, gaps, options, health, paralyses, barriers } =
   { mode: RouteMode
   , selection: Nothing
-  , health: pure true
-  , paralysis: pure false
-  , barriers: pure false
+  , health
+  , paralyses
+  , barriers
   , skills
   , gaps
   , options
   }
 
 render :: State -> ComponentHTML
-render { mode, selection, health, paralysis, barriers, skills, gaps, options } =
+render { mode, selection, health, paralyses, barriers, skills, gaps, options } =
   HH.section
     [ HP.id_ "view"
     , HP.classes $ H.ClassName <$> ["page", show mode]
@@ -138,7 +146,7 @@ render { mode, selection, health, paralysis, barriers, skills, gaps, options } =
           [ Just "option"
           , Just "column-3"
           , Just "paralysis"
-          , if foldl (||) false paralysis then Just "checked" else Nothing
+          , if foldl (||) false paralyses then Just "checked" else Nothing
           , if inSelectionMode then Just "selection-target" else Nothing
           ]
         , HE.onClick \_ -> Just $ ChangeMode if inSelectionMode then RouteMode else SelectionMode
@@ -155,7 +163,7 @@ render { mode, selection, health, paralysis, barriers, skills, gaps, options } =
     graph :: Maybe MG.SkillGraph
     graph =
       let
-        enabled = (\a b -> a && not b) <$> MC.toSkillTable health <*> paralysis
+        enabled = (\a b -> a && not b) <$> MC.toSkillTable health <*> paralyses
         table = (&&) <$> skills <*> enabled
         transform = MGO.toTransform $ MO.toGraphOptions gaps barriers options
       in MG.build table transform
@@ -202,7 +210,7 @@ render { mode, selection, health, paralysis, barriers, skills, gaps, options } =
     skillClasses =
       let
         disabled = MC.toSkillTable $ (if _ then [] else ["disabled"]) <$> health
-        paralyzed = (if _ then ["paralyzed"] else []) <$> paralysis
+        paralyzed = (if _ then ["paralyzed"] else []) <$> paralyses
         acquired = (if _ then ["acquired"] else []) <$> skills
         cost = (singleton <<< append "cost-" <<< show) <$> costTable
         merged = foldl (apply <<< map append) disabled [ paralyzed, acquired, cost ]
@@ -245,21 +253,41 @@ handleMessage (Table.GapSelected gap) = Just $ ToggleBarrier gap
 
 handleAction :: Action -> H.HalogenM State Action ChildSlots Message MonadType Unit
 handleAction = case _ of
-  HandleInput input -> do
-    H.put $ initialState input
+  HandleInput { skills, gaps, options, health, paralyses, barriers } -> do
+    H.modify_ \s -> s
+      { skills = skills
+      , gaps = gaps
+      , options = options
+      , health = health
+      , paralyses = paralyses
+      , barriers = barriers
+      }
   ChangeMode mode -> do
     H.modify_ \s -> s { mode = mode }
   SelectSkill skill -> do
-    H.modify_ \s -> case s.mode of
-      SelectionMode -> s
-        { mode = RouteMode
-        , paralysis = MT.modify skill not s.paralysis
-        }
-      _ -> s { selection = if Just skill == s.selection then Nothing else Just skill }
+    { mode } <- H.get
+    case mode of
+      SelectionMode -> do
+        H.modify_ \s -> s { mode = RouteMode }
+        handleAction $ ToggleParalysis skill
+      _ ->
+        handleAction $ ToggleSelection skill
+  ToggleSelection skill -> do
+    H.modify_ \s -> s { selection = if Just skill == s.selection then Nothing else Just skill }
   ToggleHealth category -> do
-    H.modify_ \s -> s { health = MC.modify category not s.health }
+    { health } <- H.get
+    H.raise $ HealthChanged $ MC.modify category not health
+  ToggleParalysis skill -> do
+    { paralyses } <- H.get
+    H.raise $ ParalysisChanged $ MT.modify skill not paralyses
   ToggleBarrier gap -> do
-    { gaps } <- H.get
+    { gaps, barriers } <- H.get
     if not $ MC.lookup gap gaps
-      then H.modify_ \s -> s { barriers = MC.modify gap not s.barriers }
+      then H.raise $ BarrierChanged $ MC.modify gap not barriers
       else pure unit
+
+handleQuery :: forall a. Query a -> H.HalogenM State Action ChildSlots Message MonadType (Maybe a)
+handleQuery = case _ of
+  Reset next -> do
+    H.modify_ \s -> s { mode = RouteMode, selection = Nothing }
+    pure $ Just next

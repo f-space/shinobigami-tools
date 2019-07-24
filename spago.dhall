@@ -1,7 +1,9 @@
 { name =
     "shinobigami-tools"
 , dependencies =
-    [ "console", "effect", "halogen", "psci-support", "spec" ]
+    [ "halogen", "spec" ]
 , packages =
     ./packages.dhall
+, sources =
+    [ "src/**/*.purs", "test/**/*.purs" ]
 }

@@ -75,6 +75,8 @@ render _ =
           ]
           [ HH.text "@fspace_" ]
         ]
+      , HH.span_ [ HH.text "Project" ]
+      , HH.span_ [ HH.a [ HP.href "https://github.com/f-space/shinobigami-tools" ] [ HH.text "GitHub" ] ]
       , HH.span_ [ HH.text "Link" ]
       , HH.span_ [ HH.a [ HP.href "https://coc.f-sp.com/" ] [ HH.text "クトゥルフTRPG ツール" ] ]
       ]

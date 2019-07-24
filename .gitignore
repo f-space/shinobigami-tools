@@ -2,6 +2,6 @@
 /output/
 /.spago/
 /.cache/
-/res/**/~*
 /.psc-ide-port
-/index.js
+/public/res/**/~*
+/public/index.js

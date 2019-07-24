@@ -35,7 +35,7 @@ exports.null = function (queue) {
 }
 
 /** @type {<T>(value: T, queue: Queue<T>) => ST<void>} */
-exports.push_ = function (value, queue) {
+exports._push = function (value, queue) {
 	return function () {
 		queue.array.push(value);
 		queue.dirty = true;
@@ -43,7 +43,7 @@ exports.push_ = function (value, queue) {
 }
 
 /** @type {<T>(compareFn: CompareFn<T>, queue: Queue<T>) => ST<T>} */
-exports.pop_ = function (compareFn, queue) {
+exports._pop = function (compareFn, queue) {
 	return function () {
 		if (queue.array.length !== 0) {
 			sortIfDirty(compareFn, queue);
@@ -54,7 +54,7 @@ exports.pop_ = function (compareFn, queue) {
 }
 
 /** @type {<T>(compareFn: CompareFn<T>, queue: Queue<T>) => ST<T>} */
-exports.head_ = function (compareFn, queue) {
+exports._head = function (compareFn, queue) {
 	return function () {
 		if (queue.array.length !== 0) {
 			sortIfDirty(compareFn, queue);
