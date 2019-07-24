@@ -3,7 +3,7 @@
 "use strict";
 
 /** @type {<T>(typeArg: string, eventInitDict?: CustomEventInit<T>) => () => CustomEvent<T>} */
-exports.customEvent_ = function (typeArg, eventInitDict) {
+exports._customEvent = function (typeArg, eventInitDict) {
 	return function () {
 		return new CustomEvent(typeArg, eventInitDict);
 	}

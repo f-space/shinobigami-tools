@@ -10,7 +10,7 @@ import Data.Nullable (Nullable, toMaybe)
 import Effect (Effect)
 import Web.DOM (Document, Element)
 
-foreign import elementFromPoint_ :: Fn3 Int Int Document (Effect (Nullable Element))
+foreign import _elementFromPoint :: Fn3 Int Int Document (Effect (Nullable Element))
 
 elementFromPoint :: Int -> Int -> Document -> Effect (Maybe Element)
-elementFromPoint x y document = toMaybe <$> (runFn3 elementFromPoint_) x y document
+elementFromPoint x y document = toMaybe <$> (runFn3 _elementFromPoint) x y document

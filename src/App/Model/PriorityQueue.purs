@@ -22,20 +22,20 @@ foreign import empty :: forall r a. ST r (PriorityQueue r a)
 
 foreign import null :: forall r a. PriorityQueue r a -> ST r Boolean
 
-foreign import push_ :: forall r a. Fn2 a (PriorityQueue r a) (ST r Unit)
+foreign import _push :: forall r a. Fn2 a (PriorityQueue r a) (ST r Unit)
 
-foreign import pop_ :: forall r a. Fn2 (Fn2 a a Int) (PriorityQueue r a) (ST r (Nullable a))
+foreign import _pop :: forall r a. Fn2 (Fn2 a a Int) (PriorityQueue r a) (ST r (Nullable a))
 
-foreign import head_ :: forall r a. Fn2 (Fn2 a a Int) (PriorityQueue r a) (ST r (Nullable a))
+foreign import _head :: forall r a. Fn2 (Fn2 a a Int) (PriorityQueue r a) (ST r (Nullable a))
 
 push :: forall r a. a -> PriorityQueue r a -> ST r Unit
-push = runFn2 push_
+push = runFn2 _push
 
 pop :: forall r a. Ord a => PriorityQueue r a -> ST r (Maybe a)
-pop queue = toMaybe <$> runFn2 pop_ compareFn queue
+pop queue = toMaybe <$> runFn2 _pop compareFn queue
 
 head :: forall r a. Ord a => PriorityQueue r a -> ST r (Maybe a)
-head queue = toMaybe <$> runFn2 head_ compareFn queue
+head queue = toMaybe <$> runFn2 _head compareFn queue
 
 compareFn :: forall a. Ord a => Fn2 a a Int
 compareFn = mkFn2 reversed
