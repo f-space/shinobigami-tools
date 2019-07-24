@@ -65,7 +65,7 @@ render _ =
     , HH.footer
       [ HP.class_ $ H.ClassName "information" ]
       [ HH.span_ [ HH.text "Version" ]
-      , HH.span_ [ HH.text "0.8.1" ]
+      , HH.span_ [ HH.text "0.8.2" ]
       , HH.span_ [ HH.text "Author" ]
       , HH.span_ 
         [ HH.text "F_"
