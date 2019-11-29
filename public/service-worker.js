@@ -1,4 +1,4 @@
-const CACHE_NAME = "v1.0.1";
+const CACHE_NAME = "v1.1.0";
 
 const FILE_URLS = [
 	".",
