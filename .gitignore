@@ -1,7 +1,6 @@
 /node_modules/
 /output/
 /.spago/
-/.cache/
 /.psc-ide-port
 /public/res/**/~*
 /public/index.js

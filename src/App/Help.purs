@@ -16,13 +16,15 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 
-type State = Unit
+type State = Input
 
-data Action = Close
+data Action
+  = HandleInput Input
+  | Close
 
 type Query = Const Void
 
-type Input = Unit
+type Input = { open :: Boolean }
 
 data Message = Closed
 
@@ -39,16 +41,20 @@ component =
   H.mkComponent
     { initialState
     , render
-    , eval: H.mkEval $ H.defaultEval { handleAction = handleAction }
+    , eval: H.mkEval $ H.defaultEval
+      { handleAction = handleAction
+      , receive = Just <<< HandleInput
+      }
     }
 
-initialState :: forall i. i -> State
-initialState = const unit
+initialState :: Input -> State
+initialState = identity
 
 render :: State -> ComponentHTML
-render _ =
+render { open } =
   HH.div
     [ HP.id_ "help-overlay"
+    , HP.classes $ H.ClassName <$> if open then ["open"] else [] 
     , HE.onClick \_ -> Just Close
     ]
     [ HH.section
@@ -93,5 +99,7 @@ render _ =
 
 handleAction :: Action -> H.HalogenM State Action ChildSlots Message MonadType Unit
 handleAction = case _ of
+  HandleInput input -> do
+    H.put input
   Close -> do
     H.raise Closed

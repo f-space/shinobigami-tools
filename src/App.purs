@@ -103,7 +103,7 @@ initialState _ =
   }
 
 render :: State -> ComponentHTML
-render state @ { page, help } =
+render state @ { page } =
   HH.div
     [ HP.id_ "container" ]
     [ HH.div
@@ -124,9 +124,7 @@ render state @ { page, help } =
       , HE.onClick \_ -> Just $ SetHelpOpen true
       ]
       []
-    , if help
-      then HH.slot _help unit Help.component unit handleHelpMessage
-      else HH.text ""
+    , HH.slot _help unit Help.component (helpInput state) handleHelpMessage
     ]
   where
     pageId :: Page -> String
@@ -141,6 +139,9 @@ render state @ { page, help } =
     viewInput :: State -> View.Input
     viewInput { skills, gaps, options, health, paralyses, barriers } =
       { skills, gaps, options, health, paralyses, barriers }
+
+    helpInput :: State -> Help.Input
+    helpInput { help } = { open: help }
 
 handleHomeMessage :: Home.Message -> Maybe Action
 handleHomeMessage Home.Done = Go <$> succ Home

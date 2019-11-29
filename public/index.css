@@ -224,6 +224,10 @@ a { cursor: pointer; }
 	top: 0;
 }
 
+#help-overlay:not(.open) {
+	display: none;
+}
+
 #help-dialog {
 	background: var(--black);
 	block-size: 90%;
