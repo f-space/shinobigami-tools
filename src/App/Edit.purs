@@ -16,12 +16,12 @@ import App.Table as Table
 import Data.Array (catMaybes, head)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Set (Set, empty, filter, insert)
-import Data.Symbol (SProxy(..))
 import Effect.Aff (Aff)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
+import Type.Proxy (Proxy(..))
 
 type State =
   { selectionMode :: Boolean
@@ -40,6 +40,7 @@ data Action
   | SelectYoriSkill Skill
   | Clear
   | Complete
+  | DoNothing
 
 data Query a = Reset a
 
@@ -63,10 +64,10 @@ type MonadType = Aff
 
 type ComponentHTML = H.ComponentHTML Action ChildSlots MonadType
 
-_table :: SProxy "table"
-_table = SProxy
+_table :: Proxy "table"
+_table = Proxy
 
-component :: H.Component HH.HTML Query Input Message MonadType
+component :: H.Component Query Input Message MonadType
 component =
   H.mkComponent
     { initialState
@@ -85,7 +86,7 @@ initialState { skills, gaps, options } =
 render :: State -> ComponentHTML
 render { selectionMode, skills, gaps, options } =
   HH.section
-    [ HP.id_ "edit"
+    [ HP.id "edit"
     , HP.classes $ H.ClassName <$> catMaybes
       [ Just "page"
       , if selectionMode then Just "selection-mode" else Nothing
@@ -106,12 +107,12 @@ render { selectionMode, skills, gaps, options } =
       ]
     , HH.div
       [ HP.class_ $ H.ClassName "clear"
-      , HE.onClick \_ -> Just Clear
+      , HE.onClick \_ -> Clear
       ]
       [ HH.text "白紙化"]
     , HH.div
       [ HP.class_ $ H.ClassName "complete"
-      , HE.onClick \_ -> Just Complete
+      , HE.onClick \_ -> Complete
       ]
       [ HH.text "完了" ]
     ]
@@ -125,7 +126,7 @@ render { selectionMode, skills, gaps, options } =
           , if checked then Just "checked" else Nothing
           , if target then Just "selection-target" else Nothing
           ]
-        , HE.onClick \_ -> Just action
+        , HE.onClick \_ -> action
         ]
         [ HH.text label ]
 
@@ -144,14 +145,14 @@ render { selectionMode, skills, gaps, options } =
     gapClasses :: SkillTable (Array String)
     gapClasses = MC.toSkillTable gapHeaderClasses
 
-handleMessage :: Table.Message -> Maybe Action
-handleMessage (Table.CategorySelected category) = Just $ ToggleCategory category
-handleMessage (Table.SkillSelected skill) = Just $ ToggleSkill skill
-handleMessage (Table.GapSelected gap) = Just $ ToggleGap gap
+handleMessage :: Table.Message -> Action
+handleMessage (Table.CategorySelected category) = ToggleCategory category
+handleMessage (Table.SkillSelected skill) = ToggleSkill skill
+handleMessage (Table.GapSelected gap) = ToggleGap gap
 
-handleSelectionMessage :: Table.Message -> Maybe Action
-handleSelectionMessage (Table.SkillSelected skill) = Just $ SelectYoriSkill skill
-handleSelectionMessage _ = Nothing
+handleSelectionMessage :: Table.Message -> Action
+handleSelectionMessage (Table.SkillSelected skill) = SelectYoriSkill skill
+handleSelectionMessage _ = DoNothing
 
 handleAction :: Action -> H.HalogenM State Action ChildSlots Message MonadType Unit
 handleAction = case _ of
@@ -191,6 +192,8 @@ handleAction = case _ of
     H.raise $ OptionChanged empty
   Complete -> do
     H.raise Done
+  DoNothing ->
+    pure unit
 
 handleQuery :: forall a. Query a -> H.HalogenM State Action ChildSlots Message MonadType (Maybe a)
 handleQuery = case _ of

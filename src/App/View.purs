@@ -22,13 +22,13 @@ import Data.Foldable (foldl, for_)
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Set (Set)
 import Data.String (fromCodePointArray, toCodePointArray)
-import Data.Symbol (SProxy(..))
 import Data.Tuple (uncurry)
 import Effect.Aff (Aff)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
+import Type.Proxy (Proxy(..))
 
 type State =
   { mode :: Mode
@@ -83,10 +83,10 @@ instance showMode :: Show Mode where
   show CostMode = "cost-mode"
   show SelectionMode = "selection-mode"
 
-_table :: SProxy "table"
-_table = SProxy
+_table :: Proxy "table"
+_table = Proxy
 
-component :: H.Component HH.HTML Query Input Message MonadType
+component :: H.Component Query Input Message MonadType
 component =
   H.mkComponent
     { initialState
@@ -113,7 +113,7 @@ initialState { skills, gaps, options, health, paralyses, barriers } =
 render :: State -> ComponentHTML
 render { mode, selection, health, paralyses, barriers, skills, gaps, options } =
   HH.section
-    [ HP.id_ "view"
+    [ HP.id "view"
     , HP.classes $ H.ClassName <$> ["page", show mode]
     ]
     [ HH.h1 [ HP.class_ $ H.ClassName "heading" ] [ HH.text "判定" ]
@@ -149,7 +149,7 @@ render { mode, selection, health, paralyses, barriers, skills, gaps, options } =
           , if foldl (||) false paralyses then Just "checked" else Nothing
           , if inSelectionMode then Just "selection-target" else Nothing
           ]
-        , HE.onClick \_ -> Just $ ChangeMode if inSelectionMode then RouteMode else SelectionMode
+        , HE.onClick \_ -> ChangeMode if inSelectionMode then RouteMode else SelectionMode
         ]
         [ HH.text "マヒ" ]
       ]
@@ -184,7 +184,7 @@ render { mode, selection, health, paralyses, barriers, skills, gaps, options } =
     renderMode value label =
       HH.span
         [ HP.classes $ H.ClassName <$> cons "mode" if value == mode then ["checked"] else []
-        , HE.onClick \_ -> Just $ ChangeMode value
+        , HE.onClick \_ -> ChangeMode value
         ]
         [ HH.text label ]
   
@@ -246,10 +246,10 @@ render { mode, selection, health, paralyses, barriers, skills, gaps, options } =
           | to == fromMaybe bottom (succ from) = Just $ leftGap to
           | otherwise = Nothing
 
-handleMessage :: Table.Message -> Maybe Action
-handleMessage (Table.CategorySelected category) = Just $ ToggleHealth category
-handleMessage (Table.SkillSelected skill) = Just $ SelectSkill skill
-handleMessage (Table.GapSelected gap) = Just $ ToggleBarrier gap
+handleMessage :: Table.Message -> Action
+handleMessage (Table.CategorySelected category) = ToggleHealth category
+handleMessage (Table.SkillSelected skill) = SelectSkill skill
+handleMessage (Table.GapSelected gap) = ToggleBarrier gap
 
 handleAction :: Action -> H.HalogenM State Action ChildSlots Message MonadType Unit
 handleAction = case _ of

@@ -67,6 +67,7 @@ data Action
   | SelectSkill Skill
   | SelectGap SkillCategoryGap
 
+type Query :: forall k. k -> Type
 type Query = Const Void
 
 type Input =
@@ -83,6 +84,7 @@ data Message
 
 type Slot slot = H.Slot Query Message slot
 
+type ChildSlots :: forall k. Row k
 type ChildSlots = ()
 
 type MonadType = Aff
@@ -103,7 +105,7 @@ _hover = Proxy
 _select :: Proxy SelectEvent
 _select = Proxy
 
-component :: H.Component HH.HTML Query Input Message MonadType
+component :: H.Component Query Input Message MonadType
 component =
   H.mkComponent
     { initialState
@@ -122,14 +124,14 @@ render { input: { categoryClasses, skillClasses, gapHeaderClasses, gapClasses },
   HH.table
     [ HP.class_ $ H.ClassName "table"
     , HP.ref (H.RefLabel "table")
-    , HE.onMouseDown (Just <<< MouseDown)
-    , HE.onMouseUp (Just <<< MouseUp)
-    , HE.onMouseMove (Just <<< MouseMove)
-    , HE.onMouseLeave (Just <<< MouseLeave)
-    , HE.onTouchStart (Just <<< TouchStart)
-    , HE.onTouchEnd (Just <<< TouchEnd)
-    , HE.onTouchMove (Just <<< TouchMove)
-    , HE.onTouchCancel (Just <<< TouchCancel)
+    , HE.onMouseDown MouseDown
+    , HE.onMouseUp MouseUp
+    , HE.onMouseMove MouseMove
+    , HE.onMouseLeave MouseLeave
+    , HE.onTouchStart TouchStart
+    , HE.onTouchEnd TouchEnd
+    , HE.onTouchMove TouchMove
+    , HE.onTouchCancel TouchCancel
     ]
     [ HH.colgroup_ $ renderColumns categories
     , HH.thead_ [HH.tr_ $ renderHeaderRow categories]
@@ -140,7 +142,7 @@ render { input: { categoryClasses, skillClasses, gapHeaderClasses, gapClasses },
     hoverTargets = fromFoldable $ values pointers
   
     renderColumns :: Array SkillCategory -> Array ComponentHTML
-    renderColumns = concatMap \c -> [ renderGapColumn, renderSkillColumn ]
+    renderColumns = concatMap \_ -> [ renderGapColumn, renderSkillColumn ]
   
     renderGapColumn :: ComponentHTML
     renderGapColumn = HH.col [ HP.class_ $ H.ClassName "table-col-gap" ]
@@ -158,8 +160,8 @@ render { input: { categoryClasses, skillClasses, gapHeaderClasses, gapClasses },
         hoverClass = if GapCell gap `elem` hoverTargets then ["hover"] else []
       in HH.th
         [ HP.classes $ H.ClassName <$> baseClasses <> hoverClass
-        , onTableHover \e -> Just $ SetPointerCell (detail e) $ GapCell gap
-        , onTableSelect \_ -> Just $ SelectGap gap
+        , onTableHover \e -> SetPointerCell (detail e) $ GapCell gap
+        , onTableSelect \_ -> SelectGap gap
         ]
         []
     
@@ -170,8 +172,8 @@ render { input: { categoryClasses, skillClasses, gapHeaderClasses, gapClasses },
         hoverClass = if CategoryCell category `elem` hoverTargets then ["hover"] else []
       in HH.th
         [ HP.classes $ H.ClassName <$> baseClasses <> hoverClass
-        , onTableHover \e -> Just $ SetPointerCell (detail e) $ CategoryCell category
-        , onTableSelect \_ -> Just $ SelectCategory category
+        , onTableHover \e -> SetPointerCell (detail e) $ CategoryCell category
+        , onTableSelect \_ -> SelectCategory category
         ]
         [ HH.text $ display category ]
 
@@ -187,8 +189,8 @@ render { input: { categoryClasses, skillClasses, gapHeaderClasses, gapClasses },
         hoverClass = if GapCell gap `elem` hoverTargets then ["hover"] else []
       in HH.td
         [ HP.classes $ H.ClassName <$> baseClasses <> hoverClass
-        , onTableHover \e -> Just $ SetPointerCell (detail e) $ GapCell gap
-        , onTableSelect \_ -> Just $ SelectGap gap
+        , onTableHover \e -> SetPointerCell (detail e) $ GapCell gap
+        , onTableSelect \_ -> SelectGap gap
         ]
         []
 
@@ -200,15 +202,15 @@ render { input: { categoryClasses, skillClasses, gapHeaderClasses, gapClasses },
         hoverClass = if SkillCell skill `elem` hoverTargets then ["hover"] else []
       in HH.td
         [ HP.classes $ H.ClassName <$> baseClasses <> hoverClass
-        , onTableHover \e -> Just $ SetPointerCell (detail e) $ SkillCell skill
-        , onTableSelect \_ -> Just $ SelectSkill skill
+        , onTableHover \e -> SetPointerCell (detail e) $ SkillCell skill
+        , onTableSelect \_ -> SelectSkill skill
         ]
         [ HH.text $ display skill ]
 
-    onTableHover :: forall r i. (HoverEvent -> Maybe i) -> HP.IProp r i
+    onTableHover :: forall r i. (HoverEvent -> i) -> HP.IProp r i
     onTableHover handler = HE.handler (eventType _hover) $ handler <<< unsafeFromEvent
     
-    onTableSelect :: forall r i. (SelectEvent -> Maybe i) -> HP.IProp r i
+    onTableSelect :: forall r i. (SelectEvent -> i) -> HP.IProp r i
     onTableSelect handler = HE.handler (eventType _select) $ handler <<< unsafeFromEvent
 
 handleAction :: Action -> H.HalogenM State Action ChildSlots Message MonadType Unit

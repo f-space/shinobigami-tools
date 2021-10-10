@@ -9,14 +9,14 @@ import App.Model (Option, SkillColumn, SkillTable)
 import App.View as View
 import Data.Const (Const)
 import Data.Enum (class Enum, pred, succ)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), maybe)
 import Data.Set (Set, empty)
-import Data.Symbol (SProxy(..))
 import Effect.Aff (Aff)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
+import Type.Proxy (Proxy(..))
 
 data Page = Home | Edit | View
 
@@ -40,7 +40,9 @@ data Action
   | SetParalyses (SkillTable Boolean)
   | SetBarriers (SkillColumn Boolean)
   | SetHelpOpen Boolean
+  | DoNothing
 
+type Query :: forall k. k -> Type
 type Query = Const Void
 
 type Input = Unit
@@ -70,19 +72,22 @@ instance enumPage :: Enum Page where
   succ Edit = Just View
   succ View = Nothing
 
-_home :: SProxy "home"
-_home = SProxy
+goto :: Maybe Page -> Action
+goto = maybe DoNothing Go
 
-_edit :: SProxy "edit"
-_edit = SProxy
+_home :: Proxy "home"
+_home = Proxy
 
-_view :: SProxy "view"
-_view = SProxy
+_edit :: Proxy "edit"
+_edit = Proxy
 
-_help :: SProxy "help"
-_help = SProxy
+_view :: Proxy "view"
+_view = Proxy
 
-component :: H.Component HH.HTML Query Input Message MonadType
+_help :: Proxy "help"
+_help = Proxy
+
+component :: H.Component Query Input Message MonadType
 component =
   H.mkComponent
     { initialState
@@ -105,9 +110,9 @@ initialState _ =
 render :: State -> ComponentHTML
 render state @ { page } =
   HH.div
-    [ HP.id_ "container" ]
+    [ HP.id "container" ]
     [ HH.div
-      [ HP.id_ "track"
+      [ HP.id "track"
       , HP.attr (H.AttrName "data-page") $ pageId page
       ]
       [ HH.slot _home unit Home.component unit handleHomeMessage
@@ -115,13 +120,13 @@ render state @ { page } =
       , HH.slot _view unit View.component (viewInput state) handleViewMessage
       ]
     , HH.div
-      [ HP.id_ "back"
-      , HE.onClick \_ -> Go <$> pred page
+      [ HP.id "back"
+      , HE.onClick \_ -> goto $ pred page
       ]
       [ HH.text "戻る" ]
     , HH.div
-      [ HP.id_ "help-icon"
-      , HE.onClick \_ -> Just $ SetHelpOpen true
+      [ HP.id "help-icon"
+      , HE.onClick \_ -> SetHelpOpen true
       ]
       []
     , HH.slot _help unit Help.component (helpInput state) handleHelpMessage
@@ -143,30 +148,30 @@ render state @ { page } =
     helpInput :: State -> Help.Input
     helpInput { help } = { open: help }
 
-handleHomeMessage :: Home.Message -> Maybe Action
-handleHomeMessage Home.Done = Go <$> succ Home
+handleHomeMessage :: Home.Message -> Action
+handleHomeMessage Home.Done = maybe DoNothing Go $ succ Home
 
-handleEditMessage :: Edit.Message -> Maybe Action
-handleEditMessage (Edit.SkillChanged skills) = Just $ SetSkills skills
-handleEditMessage (Edit.GapChanged gaps) = Just $ SetGaps gaps
-handleEditMessage (Edit.OptionChanged options) = Just $ SetOptions options
-handleEditMessage Edit.Done = Go <$> succ Edit
+handleEditMessage :: Edit.Message -> Action
+handleEditMessage (Edit.SkillChanged skills) = SetSkills skills
+handleEditMessage (Edit.GapChanged gaps) = SetGaps gaps
+handleEditMessage (Edit.OptionChanged options) = SetOptions options
+handleEditMessage Edit.Done = goto $ succ Edit
 
-handleViewMessage :: View.Message -> Maybe Action
-handleViewMessage (View.HealthChanged health) = Just $ SetHealth health
-handleViewMessage (View.ParalysisChanged paralyses) = Just $ SetParalyses paralyses
-handleViewMessage (View.BarrierChanged barriers) = Just $ SetBarriers barriers
+handleViewMessage :: View.Message -> Action
+handleViewMessage (View.HealthChanged health) = SetHealth health
+handleViewMessage (View.ParalysisChanged paralyses) = SetParalyses paralyses
+handleViewMessage (View.BarrierChanged barriers) = SetBarriers barriers
 
-handleHelpMessage :: Help.Message -> Maybe Action
-handleHelpMessage Help.Closed = Just $ SetHelpOpen false
+handleHelpMessage :: Help.Message -> Action
+handleHelpMessage Help.Closed = SetHelpOpen false
 
 handleAction :: Action -> H.HalogenM State Action ChildSlots Message MonadType Unit
 handleAction = case _ of
   Go page -> do
     H.modify_ (_ { page = page })
     case page of
-      Edit -> void $ H.queryAll _edit $ H.tell $ Edit.Reset
-      View -> void $ H.queryAll _view $ H.tell $ View.Reset
+      Edit -> void $ H.tell _edit unit Edit.Reset
+      View -> void $ H.tell _view unit View.Reset
       _ -> pure unit
   SetSkills skills -> do
     H.modify_ (_ { skills = skills })
@@ -182,3 +187,5 @@ handleAction = case _ of
     H.modify_ (_ { barriers = barriers })
   SetHelpOpen open -> do
     H.modify_ (_ { help = open })
+  DoNothing ->
+    pure unit

@@ -22,6 +22,7 @@ data Action
   = HandleInput Input
   | Close
 
+type Query :: forall k. k -> Type
 type Query = Const Void
 
 type Input = { open :: Boolean }
@@ -30,13 +31,14 @@ data Message = Closed
 
 type Slot slot = H.Slot Query Message slot
 
+type ChildSlots :: forall k. Row k
 type ChildSlots = ()
 
 type MonadType = Aff
 
 type ComponentHTML = H.ComponentHTML Action ChildSlots MonadType
 
-component :: H.Component HH.HTML Query Input Message MonadType
+component :: H.Component Query Input Message MonadType
 component =
   H.mkComponent
     { initialState
@@ -53,12 +55,12 @@ initialState = identity
 render :: State -> ComponentHTML
 render { open } =
   HH.div
-    [ HP.id_ "help-overlay"
+    [ HP.id "help-overlay"
     , HP.classes $ H.ClassName <$> if open then ["open"] else [] 
-    , HE.onClick \_ -> Just Close
+    , HE.onClick \_ -> Close
     ]
     [ HH.section
-      [ HP.id_ "help-dialog" ]
+      [ HP.id "help-dialog" ]
       [ HH.h1_ [ HH.text "使い方" ]
       , HH.p_
         [ HH.text $
