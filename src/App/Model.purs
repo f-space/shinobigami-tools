@@ -9,5 +9,20 @@ module App.Model
 import App.Model.Column (SkillColumn)
 import App.Model.Display (class Display, display)
 import App.Model.Option (Option(..))
-import App.Model.Skill (Skill(..), SkillCategory, SkillCategoryGap, SkillIndex, categories, getCategory, getIndex, indices, leftCategory, leftGap, rightCategory, rightGap)
+import App.Model.Skill
+  ( Skill(..)
+  , SkillCategory
+  , SkillCategoryGap
+  , SkillIndex
+  , categories
+  , getCategory
+  , getIndex
+  , indices
+  , leftCategory
+  , leftCategory'
+  , leftGap
+  , rightCategory
+  , rightGap
+  , rightGap'
+  )
 import App.Model.Table (SkillTable)

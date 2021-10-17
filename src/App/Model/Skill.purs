@@ -11,7 +11,9 @@ module App.Model.Skill
   , shiftWrap
   , leftGap
   , rightGap
+  , rightGap'
   , leftCategory
+  , leftCategory'
   , rightCategory
   ) where
 
@@ -131,8 +133,14 @@ leftGap = SkillCategoryGap
 rightGap :: SkillCategory -> SkillCategoryGap
 rightGap = SkillCategoryGap <<< fromMaybe bottom <<< succ
 
+rightGap' :: SkillCategory -> Maybe SkillCategoryGap
+rightGap' = map SkillCategoryGap <<< succ
+
 leftCategory :: SkillCategoryGap -> SkillCategory
 leftCategory (SkillCategoryGap category) = fromMaybe top $ pred category
+
+leftCategory' :: SkillCategoryGap -> Maybe SkillCategory
+leftCategory' (SkillCategoryGap category) = pred category
 
 rightCategory :: SkillCategoryGap -> SkillCategory
 rightCategory (SkillCategoryGap category) = category

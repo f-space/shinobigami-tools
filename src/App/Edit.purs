@@ -8,7 +8,7 @@ module App.Edit
 
 import Prelude
 
-import App.Model (Option(..), Skill, SkillCategory, SkillCategoryGap, SkillColumn, SkillTable, display, leftGap, rightGap)
+import App.Model (Option(..), Skill, SkillCategory, SkillCategoryGap, SkillColumn, SkillTable, display, leftGap, rightGap')
 import App.Model.Column as MC
 import App.Model.Option as MO
 import App.Model.Table as MT
@@ -161,8 +161,8 @@ handleAction = case _ of
   ToggleCategory category -> do
     { gaps } <- H.get
     let left = leftGap category
-    let right = rightGap category
-    let value = MC.fillWith \gap -> gap == left || gap == right
+    let right = rightGap' category
+    let value = MC.fillWith \gap -> gap == left || Just gap == right
     H.raise $ GapChanged if value /= gaps then value else MC.fill false
   ToggleSkill skill -> do
     { skills } <- H.get
